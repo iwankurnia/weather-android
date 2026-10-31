@@ -66,9 +66,19 @@ Agreed mockup: `mockups/backgrounds-day-night.html`. There are six weather types
 | Clear | bright blue sky | deep navy | glowing sun / stars and moon |
 | Partly cloudy | softer blue | navy | a few drifting clouds (plus sun or moon) |
 | Cloudy | grey-blue | dark slate | more, greyer clouds |
-| Rain | blue-grey | very dark blue-grey | falling rain |
-| Thunderstorm | dark slate | near black | rain plus an occasional lightning flash |
-| Haze / fog | pale beige-grey | dark warm grey | slow drifting mist |
+| Rain | blue-grey | very dark blue-grey | "falling rain", see below |
+| Thunderstorm | dark slate | near black | "falling rain" with wind and lightning, see below |
+| Haze / fog | darker beige-grey (white text must stay readable) | dark warm grey | slow drifting mist |
+
+**Rain and thunderstorm: "falling rain" (Iwan's choice, 2026-11-01).** Agreed mockup: `mockups/rain-storm.html`. It replaces the flat diagonal stripes in the earlier mockups. Everything is drawn on a canvas behind the cards:
+- **Clouds:** a band of heavy, dark clouds rolls slowly across the top of the screen. It is dimmer at night.
+- **Rain:** falls in two layers, distant drops short, thin and slow, near drops longer, thicker and faster. Rain slants slightly with the wind.
+- **Splashes:** near drops leave small splash ripples along the bottom edge.
+- **Thunderstorm:**
+  - More rain, slanting more steeply.
+  - Every few seconds, a branching lightning bolt with a soft glow strikes from the top. It flickers once or twice, and a short flash lights the whole screen. The flash is cool-tinted at night.
+- **The rain never covers the text.** It stays behind the cards.
+- **Reduced motion:** with "Remove animations" on, the background shows a still frame (clouds and a few drops) and lightning is not shown.
 
 - **Day or night:** day runs from local sunrise to sunset.
 - **Haze:** included because it is common in Jakarta.
