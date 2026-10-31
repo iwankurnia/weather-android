@@ -58,7 +58,11 @@ class RainModel(
     var strikeCount = 0
         private set
 
-    /** Bolt opacity for this frame, flickering while the bolt is fresh; 0 when none shows. */
+    /** How many times the current bolt flickers: 1 or 2, picked when it strikes. */
+    var boltFlickers = 0
+        private set
+
+    /** Bolt opacity for this frame, dipping [boltFlickers] times while fresh; 0 when none shows. */
     var boltAlpha = 0f
         private set
 
@@ -119,12 +123,13 @@ class RainModel(
         if (untilStrikeMs <= 0f) {
             makeBolt()
             strikeCount++
+            boltFlickers = if (random.nextFloat() < 0.5f) 1 else 2
             boltLife = 1f
             flashLevel = 1f
             untilStrikeMs = 3500f + random.nextFloat() * 4000f
         }
         if (boltLife > 0f) {
-            boltAlpha = if (boltLife > 0.6f) (if (random.nextFloat() < 0.5f) 1f else 0.35f) else boltLife
+            boltAlpha = boltAlphaFor(boltLife, boltFlickers)
             boltLife -= 0.025f * dt
         } else {
             boltAlpha = 0f
@@ -210,6 +215,34 @@ class RainModel(
 
         /** Bolts stay within this fraction of the height from the top. */
         const val BOLT_LIMIT = 0.6f
+
+        /** Bolt opacity during a flicker dip. */
+        const val FLICKER_ALPHA = 0.35f
+
+        /** While the bolt's life is above this it is fresh: full strength apart from its dips. */
+        private const val FRESH_LIFE = 0.6f
+
+        /** Each dip lasts this much life: two or three frames at 60 fps. */
+        private const val DIP_LIFE = 0.06f
+
+        /** Life at which each dip starts, for one flicker and for two. */
+        private val ONE_DIP = floatArrayOf(0.84f)
+        private val TWO_DIPS = floatArrayOf(0.90f, 0.74f)
+
+        /**
+         * Bolt opacity at [life] (1 when it strikes, falling to 0). The mockup flips at random
+         * every frame while fresh, which strobes; here the bolt dips briefly [flickers] times at
+         * fixed points, then fades out with its life.
+         */
+        fun boltAlphaFor(life: Float, flickers: Int): Float {
+            if (life <= 0f) return 0f
+            if (life <= FRESH_LIFE) return life
+            val dips = if (flickers >= 2) TWO_DIPS else ONE_DIP
+            for (start in dips) {
+                if (life <= start && life > start - DIP_LIFE) return FLICKER_ALPHA
+            }
+            return 1f
+        }
 
         /** The mockup canvas (288 × 520 CSS px at 2×) that the base drop counts were tuned for. */
         private const val REF_AREA = 576f * 1040f

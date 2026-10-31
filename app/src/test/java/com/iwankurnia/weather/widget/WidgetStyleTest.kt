@@ -1,7 +1,9 @@
 package com.iwankurnia.weather.widget
 
+import com.iwankurnia.weather.model.SampleData
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
@@ -34,5 +36,26 @@ class WidgetStyleTest {
         assertEquals("33°", formatDegrees(33.4))
         assertEquals("34°", formatDegrees(33.5))
         assertEquals("0°", formatDegrees(-0.4))
+    }
+
+    @Test
+    fun areaLine_keepsTheAreaWhenLocationMayBeStale() {
+        val snapshot = SampleData.dayPartlyCloudy
+        val stale = WidgetState(snapshot, locationMayBeStale = true, canLocate = true)
+        assertEquals(snapshot.place.areaName, stale.areaLine())
+        assertEquals(LOCATION_STALE_TEXT, stale.staleHint())
+    }
+
+    @Test
+    fun staleHint_hiddenWithBackgroundLocation() {
+        val current = WidgetState(SampleData.dayPartlyCloudy, locationMayBeStale = false, canLocate = true)
+        assertEquals(SampleData.dayPartlyCloudy.place.areaName, current.areaLine())
+        assertNull(current.staleHint())
+    }
+
+    @Test
+    fun placeholder_saysUpdatingOnceLocationIsAllowed() {
+        assertEquals(UPDATING_TEXT, WidgetState(null, locationMayBeStale = true, canLocate = true).placeholderText())
+        assertEquals(SET_UP_TEXT, WidgetState(null, locationMayBeStale = true, canLocate = false).placeholderText())
     }
 }

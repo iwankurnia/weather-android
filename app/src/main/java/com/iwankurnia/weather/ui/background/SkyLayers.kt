@@ -8,8 +8,6 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LongState
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.BlurredEdgeTreatment
-import androidx.compose.ui.draw.blur
 import androidx.compose.ui.draw.drawWithCache
 import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
@@ -29,7 +27,8 @@ import kotlin.math.sqrt
  * and fog. Sizes are the mockup's CSS pixels read as dp. Horizontal cloud positions are scaled from
  * the 248 px wide mockup screen to the real width. Every layer reads the shared [LongState] clock
  * (milliseconds) only while drawing, so animation redraws without recomposing; a clock stuck at 0
- * gives the reduced-motion still frame.
+ * gives the reduced-motion still frame. Blurred layers are blurred once ([blurredSprite]) and only
+ * moved after that.
  */
 
 /** CSS `ease-in-out`. */
@@ -141,33 +140,36 @@ internal val CloudNight = Color(0x4D96A0B9)
 
 /**
  * Soft pill-shaped clouds with a puff on top, drifting from −25 to +30 dp and back (`.cl`).
+ * Each cloud is blurred once (`blur(2px)`) and then only moved.
  */
 @Composable
 internal fun Clouds(clock: LongState, clouds: List<CloudSpec>, colour: Color) {
     Spacer(
-        Modifier
-            .fillMaxSize()
-            .blur(2.dp, BlurredEdgeTreatment.Unbounded)
-            .drawWithCache {
-                val xScale = size.width / MOCKUP_WIDTH_DP.dp.toPx()
-                val height = 42.dp.toPx()
-                val corner = CornerRadius(height / 2f)
-                val from = (-25).dp.toPx()
-                val span = 55.dp.toPx()
-                onDrawBehind {
-                    val t = clock.longValue
-                    for (i in clouds.indices) {
-                        val cloud = clouds[i]
-                        val dx = from + span * pingPong(t, cloud.durationMs, LinearEasing)
-                        val w = cloud.width.dp.toPx()
-                        val x = cloud.left.dp.toPx() * xScale + dx
-                        val y = cloud.top.dp.toPx()
-                        drawRoundRect(colour, Offset(x, y), Size(w, height), corner)
-                        // `::before`: 55% wide, 140% tall, 18% in from the left, 60% above the top.
-                        drawOval(colour, Offset(x + 0.18f * w, y - 0.6f * height), Size(0.55f * w, 1.4f * height))
-                    }
+        Modifier.fillMaxSize().drawWithCache {
+            val xScale = size.width / MOCKUP_WIDTH_DP.dp.toPx()
+            val height = 42.dp.toPx()
+            val corner = CornerRadius(height / 2f)
+            val from = (-25).dp.toPx()
+            val span = 55.dp.toPx()
+            val puffRise = 0.6f * height
+            val sprites = Array(clouds.size) { i ->
+                val w = clouds[i].width.dp.toPx()
+                blurredSprite(w, height + puffRise, 2.dp.toPx()) {
+                    drawRoundRect(colour, Offset(0f, puffRise), Size(w, height), corner)
+                    // `::before`: 55% wide, 140% tall, 18% in from the left, 60% above the top.
+                    drawOval(colour, Offset(0.18f * w, 0f), Size(0.55f * w, 1.4f * height))
                 }
-            },
+            }
+            onDrawBehind {
+                val t = clock.longValue
+                for (i in clouds.indices) {
+                    val cloud = clouds[i]
+                    val dx = from + span * pingPong(t, cloud.durationMs, LinearEasing)
+                    val x = cloud.left.dp.toPx() * xScale + dx
+                    drawSprite(sprites[i], Offset(x, cloud.top.dp.toPx() - puffRise))
+                }
+            }
+        },
     )
 }
 
@@ -175,24 +177,24 @@ internal fun Clouds(clock: LongState, clouds: List<CloudSpec>, colour: Color) {
 internal val FogDay = Color(0x73FFFFFF)
 internal val FogNight = Color(0x2EC8BEAA)
 
-/** Two wide, heavily blurred bands of mist easing side to side (`.fog`). */
+/** Two wide, heavily blurred bands of mist easing side to side (`.fog`), blurred once. */
 @Composable
 internal fun Fog(clock: LongState, colour: Color) {
     Spacer(
-        Modifier
-            .fillMaxSize()
-            .blur(14.dp, BlurredEdgeTreatment.Unbounded)
-            .drawWithCache {
-                val left = -0.4f * size.width
-                val bandSize = Size(1.8f * size.width, 70.dp.toPx())
-                val tops = floatArrayOf(60.dp.toPx(), 260.dp.toPx())
-                val from = (-25).dp.toPx()
-                val span = 55.dp.toPx()
-                onDrawBehind {
-                    val t = clock.longValue
-                    drawOval(colour, Offset(left + from + span * pingPong(t, 12_000L, CssEaseInOut), tops[0]), bandSize)
-                    drawOval(colour, Offset(left + from + span * pingPong(t, 16_000L, CssEaseInOut), tops[1]), bandSize)
-                }
-            },
+        Modifier.fillMaxSize().drawWithCache {
+            val left = -0.4f * size.width
+            val bandSize = Size(1.8f * size.width, 70.dp.toPx())
+            val tops = floatArrayOf(60.dp.toPx(), 260.dp.toPx())
+            val from = (-25).dp.toPx()
+            val span = 55.dp.toPx()
+            val band = blurredSprite(bandSize.width, bandSize.height, 14.dp.toPx()) {
+                drawOval(colour, Offset.Zero, bandSize)
+            }
+            onDrawBehind {
+                val t = clock.longValue
+                drawSprite(band, Offset(left + from + span * pingPong(t, 12_000L, CssEaseInOut), tops[0]))
+                drawSprite(band, Offset(left + from + span * pingPong(t, 16_000L, CssEaseInOut), tops[1]))
+            }
+        },
     )
 }

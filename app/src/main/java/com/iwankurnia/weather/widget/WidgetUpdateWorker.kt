@@ -7,7 +7,9 @@ import androidx.glance.appwidget.updateAll
 import androidx.work.Constraints
 import androidx.work.CoroutineWorker
 import androidx.work.ExistingPeriodicWorkPolicy
+import androidx.work.ExistingWorkPolicy
 import androidx.work.NetworkType
+import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.PeriodicWorkRequestBuilder
 import androidx.work.WorkManager
 import androidx.work.WorkerParameters
@@ -46,13 +48,28 @@ object WidgetUpdater {
     /** Bumped on every [updateAll], so widget sessions that are still running reload the cache. */
     val refreshes: StateFlow<Int> = _refreshes.asStateFlow()
 
+    const val REFRESH_NOW_WORK_NAME = "widget-refresh-now"
+
+    private val online = Constraints.Builder().setRequiredNetworkType(NetworkType.CONNECTED).build()
+
     /** Refresh about every 30 minutes while online. Safe to call repeatedly (KEEP). */
     fun schedule(context: Context) {
         val request = PeriodicWorkRequestBuilder<WidgetUpdateWorker>(30, TimeUnit.MINUTES)
-            .setConstraints(Constraints.Builder().setRequiredNetworkType(NetworkType.CONNECTED).build())
+            .setConstraints(online)
             .build()
         WorkManager.getInstance(context)
             .enqueueUniquePeriodicWork(WORK_NAME, ExistingPeriodicWorkPolicy.KEEP, request)
+    }
+
+    /**
+     * One refresh as soon as the phone is online, so a new widget, or one that has just been
+     * given location access, need not wait for the next periodic run. A newer call replaces one
+     * still waiting or running (REPLACE).
+     */
+    fun refreshNow(context: Context) {
+        val request = OneTimeWorkRequestBuilder<WidgetUpdateWorker>().setConstraints(online).build()
+        WorkManager.getInstance(context)
+            .enqueueUniqueWork(REFRESH_NOW_WORK_NAME, ExistingWorkPolicy.REPLACE, request)
     }
 
     /** Stops the refresh once neither widget is on the home screen. */

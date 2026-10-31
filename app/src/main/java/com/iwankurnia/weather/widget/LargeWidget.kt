@@ -29,8 +29,9 @@ import com.iwankurnia.weather.model.WeatherSnapshot
 import com.iwankurnia.weather.ui.icons.conditionLabel
 
 /**
- * The 4×2 widget: area and today's conditions on top; the ticking time and date on the left,
- * and the temperature, icon and "feels like" pill on the right.
+ * The 4×2 widget: area (with a small hint under it when the location may be out of date) and
+ * today's conditions on top; the ticking time and date on the left, and the temperature, icon
+ * and "feels like" pill on the right.
  */
 class LargeWidget : GlanceAppWidget() {
     override suspend fun provideGlance(context: Context, id: GlanceId) {
@@ -47,15 +48,20 @@ class LargeWidget : GlanceAppWidget() {
 @Composable
 private fun LargeWidgetContent(state: WidgetState, style: WidgetTextStyle) {
     val colours = widgetColours(style)
-    val snapshot = state.snapshot ?: return SetUpPrompt(colours)
+    val snapshot = state.snapshot ?: return Placeholder(state.placeholderText(), colours)
     Column(modifier = GlanceModifier.widgetCard(colours, 16.dp)) {
-        Row(modifier = GlanceModifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-            Text(
-                text = state.areaLine(),
-                style = textStyle(colours.subtle, 11.sp, FontWeight.Medium),
-                maxLines = 1,
-                modifier = GlanceModifier.defaultWeight(),
-            )
+        Row(modifier = GlanceModifier.fillMaxWidth(), verticalAlignment = Alignment.Top) {
+            Column(modifier = GlanceModifier.defaultWeight()) {
+                Text(
+                    text = state.areaLine(),
+                    style = textStyle(colours.subtle, 11.sp, FontWeight.Medium),
+                    maxLines = 1,
+                )
+                state.staleHint()?.let { hint ->
+                    Spacer(GlanceModifier.height(2.dp))
+                    StaleHint(hint, colours)
+                }
+            }
             Text(
                 text = todayLine(snapshot),
                 style = textStyle(colours.text, 11.sp, FontWeight.Medium, TextAlign.End),
