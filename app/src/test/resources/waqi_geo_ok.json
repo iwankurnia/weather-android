@@ -1,0 +1,36 @@
+{
+  "status": "ok",
+  "data": {
+    "aqi": 158,
+    "idx": 8294,
+    "attributions": [
+      {
+        "url": "https://www.airnow.gov/",
+        "name": "US Embassy and Consulates Air Quality Monitor in Indonesia"
+      },
+      {
+        "url": "https://waqi.info/",
+        "name": "World Air Quality Index Project"
+      }
+    ],
+    "city": {
+      "geo": [-6.182536, 106.834236],
+      "name": "Jakarta Central (US Consulate), Indonesia",
+      "url": "https://aqicn.org/city/indonesia/jakarta/us-consulate/central",
+      "location": ""
+    },
+    "dominentpol": "pm25",
+    "iaqi": {
+      "pm25": { "v": 158 },
+      "t": { "v": 30.5 },
+      "h": { "v": 66 }
+    },
+    "time": {
+      "s": "2026-11-01 04:00:00",
+      "tz": "+07:00",
+      "v": 1793505600,
+      "iso": "2026-11-01T04:00:00+07:00"
+    },
+    "debug": { "sync": "2026-11-01T05:12:31+09:00" }
+  }
+}
