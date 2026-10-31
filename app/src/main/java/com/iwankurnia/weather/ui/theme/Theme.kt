@@ -25,7 +25,7 @@ import kotlin.math.sin
 fun WeatherTheme(darkTheme: Boolean = isSystemInDarkTheme(), content: @Composable () -> Unit) {
     val context = LocalContext.current
     val colours = if (darkTheme) dynamicDarkColorScheme(context) else dynamicLightColorScheme(context)
-    MaterialTheme(colorScheme = colours, typography = WeatherTypography, content = content)
+    MaterialTheme(colorScheme = colours, typography = WeatherTypography) { ResponsiveText(content) }
 }
 
 /**

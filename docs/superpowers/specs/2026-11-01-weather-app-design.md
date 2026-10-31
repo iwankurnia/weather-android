@@ -51,6 +51,7 @@ Agreed mockup: `mockups/app-screen.html` (day: partly cloudy; night: rain). Full
    Visibility appeared in an early mockup and is optional.
 
 **Look:**
+- **Responsive text (Iwan's request):** all text scales with the window width against the 411 dp phone the mockups were drawn for. It goes down to 85% on small phones and split screen, and up to 125% on tablets and landscape. It multiplies with the phone's own font-size setting.
 - **Typography:** Roboto Flex, with wide, bold numbers.
 - **Cards:** solid, rounded (28 dp corners), and tinted to suit the background.
 - **Hourly items:** pill-shaped.
@@ -92,6 +93,10 @@ Agreed mockup: `mockups/widget.html` (option C, without the hourly row). It take
 - **Large (4×2):** a rounded card. The top line has the area name on the left (as in the small widget) and "Partly cloudy · H34° L25°" on the right. Below that, the time ("12:41") and date ("Sunday, 1 November") are on the left. The current temperature and condition icon are on the right, with a "Feels 39°" pill under them.
 - **Small (2×2):** a rounded card with the area name, the temperature, a "Feels 39° ⛅" pill and the condition.
 - Tapping either widget opens the app.
+- **Responsive widgets (Iwan's request):** both widgets can be resized down to one cell, and they pick a layout from their real size.
+  - **Large widget:** one row (time, icon, temperature, "feels like") at one cell tall. No condition text when narrow. Bigger type plus the forecast summary when roomy.
+  - **Small widget:** icon and temperature at one cell wide. A single row at one cell tall. Bigger type plus today's high and low when roomy.
+  - Cells under 120 dp count as one cell.
 - **Background opacity (Iwan's request):** each widget has its own opacity setting, from 0% (text only) to 100% (solid), defaulting to 100%. A small settings sheet with a slider opens when the widget is added. To change it later, long-press the widget and use Android's reconfigure (pencil) option. The mockup shows 100%, 60%, 0% and the sheet.
   - *Claude's call:* at 40% or lower, the text switches to white with a soft shadow so it stays readable on the wallpaper.
 
