@@ -1,6 +1,8 @@
 package com.iwankurnia.weather.di
 
+import android.Manifest
 import android.content.Context
+import android.content.pm.PackageManager
 import com.iwankurnia.weather.data.DefaultWeatherRepository
 import com.iwankurnia.weather.data.KelurahanIndex
 import com.iwankurnia.weather.data.SnapshotCache
@@ -31,8 +33,15 @@ class AppGraph(context: Context) {
         cache = snapshotCache,
         merge = SnapshotMerger::merge,
         clock = Clock.systemDefaultZone(),
+        hasLocationPermission = { hasLocationPermission(app) },
     )
 }
+
+/** Coarse or fine location is enough; the repository only needs to know whether either was granted. */
+private fun hasLocationPermission(context: Context): Boolean =
+    listOf(Manifest.permission.ACCESS_COARSE_LOCATION, Manifest.permission.ACCESS_FINE_LOCATION).any {
+        context.checkSelfPermission(it) == PackageManager.PERMISSION_GRANTED
+    }
 
 /** Reads the bundled kelurahan list on first lookup, so app start-up doesn't pay for it. */
 private class LazyKelurahanIndex(private val context: Context) : KelurahanIndex {

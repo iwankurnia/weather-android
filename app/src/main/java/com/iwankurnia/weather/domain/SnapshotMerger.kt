@@ -83,7 +83,7 @@ object SnapshotMerger {
             days = core.days,
             details = details(ctx, core.rainTomorrowMm),
             air = air ?: om.modelledUsAqi?.let { AirQuality(it, null, "Open-Meteo (CAMS)", modelled = true) },
-            summary = summaryLine(core.steps, feelsLike),
+            summary = summaryLine(core.steps, feelsLike, now),
             source = core.source,
             fetchedAt = fetchedAt,
         )

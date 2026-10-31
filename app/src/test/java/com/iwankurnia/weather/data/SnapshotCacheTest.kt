@@ -51,6 +51,31 @@ class SnapshotCacheTest {
     }
 
     @Test
+    fun cache_roundTripsBmkgFailureTime() = runTest {
+        val file = File(tmp.root, "cache.json")
+        val failedAt = Instant.parse("2026-11-01T05:30:00Z")
+        SnapshotCache(file).save(SampleData.dayPartlyCloudy, bmkg, bmkgFailedAt = failedAt)
+        assertEquals(failedAt, SnapshotCache(file).bmkgFailedAt())
+
+        SnapshotCache(file).save(SampleData.dayPartlyCloudy, bmkg)
+        assertNull(SnapshotCache(file).bmkgFailedAt())
+    }
+
+    @Test
+    fun cache_fileWithoutFailureTime_stillLoads() = runTest {
+        // Rewrite the file as a build without `bmkgFailedAt` would have written it.
+        val file = File(tmp.root, "cache.json")
+        SnapshotCache(file).save(SampleData.nightRain, bmkg, bmkgFailedAt = Instant.parse("2026-11-01T05:30:00Z"))
+        file.writeText(file.readText().replace(Regex(",\\s*\"bmkgFailedAt\"\\s*:\\s*\"[^\"]*\""), ""))
+        assertFalse(file.readText().contains("bmkgFailedAt"))
+
+        val cache = SnapshotCache(file)
+        assertEquals(SampleData.nightRain, cache.snapshot())
+        assertEquals(bmkg, cache.bmkg())
+        assertNull(cache.bmkgFailedAt())
+    }
+
+    @Test
     fun cache_corruptFile_readsAsEmpty() = runTest {
         val file = File(tmp.root, "cache.json")
         file.writeText("{not json")

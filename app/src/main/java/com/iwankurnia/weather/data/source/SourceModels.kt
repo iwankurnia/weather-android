@@ -30,7 +30,8 @@ data class OmHour(
     val apparentC: Double,
     val humidityPct: Int,
     val weatherCode: Int,
-    val rainChancePct: Int,
+    /** Null when Open-Meteo has no chance of rain for the hour. */
+    val rainChancePct: Int?,
     val precipitationMm: Double,
     val visibilityM: Double?,
     val uvIndex: Double,
@@ -46,7 +47,8 @@ data class OmDay(
     val lowC: Double,
     val highC: Double,
     val weatherCode: Int,
-    val rainChancePct: Int,
+    /** Null when Open-Meteo has no chance of rain for the day. */
+    val rainChancePct: Int?,
     val sunrise: LocalTime,
     val sunset: LocalTime,
 )

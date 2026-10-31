@@ -17,6 +17,14 @@ import java.time.Instant
 import java.time.LocalDateTime
 import java.time.ZoneId
 import java.time.ZoneOffset
+import java.util.concurrent.Executors
+import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.asCoroutineDispatcher
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.test.StandardTestDispatcher
+import kotlinx.coroutines.test.TestScope
+import kotlinx.coroutines.test.currentTime
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
@@ -50,6 +58,7 @@ class DefaultWeatherRepositoryTest {
     private lateinit var air: FakeAir
     private lateinit var cache: SnapshotCache
     private lateinit var merge: RecordingMerge
+    private var permissionGranted = true
 
     @Before
     fun setUp() {
@@ -64,7 +73,10 @@ class DefaultWeatherRepositoryTest {
         merge = RecordingMerge()
     }
 
-    private fun repository() = DefaultWeatherRepository(
+    /** Runs on the test scheduler by default, so BMKG delays and timeouts use virtual time. */
+    private fun TestScope.repository(
+        dispatcher: CoroutineDispatcher = StandardTestDispatcher(testScheduler),
+    ) = DefaultWeatherRepository(
         location = location,
         areaNamer = namer,
         kelurahan = index,
@@ -74,6 +86,8 @@ class DefaultWeatherRepositoryTest {
         cache = cache,
         merge = merge::invoke,
         clock = clock,
+        hasLocationPermission = { permissionGranted },
+        dispatcher = dispatcher,
     )
 
     @Test
@@ -127,6 +141,101 @@ class DefaultWeatherRepositoryTest {
         repository().load(forceRefresh = true)
 
         assertNull(merge.last.bmkg)
+    }
+
+    @Test
+    fun repository_bmkgFails_skipsBmkgFor15Minutes() = runTest {
+        bmkg.failure = IOException("BMKG down")
+        val repo = repository()
+        repo.load(forceRefresh = true)
+        clock.advance(Duration.ofMinutes(14))
+
+        repo.load(forceRefresh = true)
+
+        assertEquals(1, bmkg.calls.size)
+        assertNull(merge.last.bmkg)
+        assertEquals(2, openMeteo.calls)
+
+        clock.advance(Duration.ofMinutes(2))
+        repo.load(forceRefresh = true)
+
+        assertEquals(2, bmkg.calls.size)
+    }
+
+    @Test
+    fun repository_bmkgNoSteps_skipsBmkgFor15Minutes() = runTest {
+        bmkg.forecast = bmkgForecast.copy(steps = emptyList())
+        val repo = repository()
+        repo.load(forceRefresh = true)
+        clock.advance(Duration.ofMinutes(5))
+
+        repo.load(forceRefresh = true)
+
+        assertEquals(1, bmkg.calls.size)
+    }
+
+    @Test
+    fun repository_bmkgFails_reusesCachedForecastUnder6Hours() = runTest {
+        val repo = repository()
+        repo.load(forceRefresh = true)
+        clock.advance(Duration.ofMinutes(90))
+        bmkg.failure = IOException("BMKG down")
+
+        repo.load(forceRefresh = true)
+
+        assertEquals(2, bmkg.calls.size)
+        assertEquals(bmkgForecast, merge.last.bmkg)
+
+        // Inside the 15-minute back-off: no BMKG call, and still the cached forecast.
+        clock.advance(Duration.ofMinutes(10))
+        repo.load(forceRefresh = true)
+
+        assertEquals(2, bmkg.calls.size)
+        assertEquals(bmkgForecast, merge.last.bmkg)
+    }
+
+    @Test
+    fun repository_bmkgFails_dropsCachedForecastOver6Hours() = runTest {
+        val repo = repository()
+        repo.load(forceRefresh = true)
+        clock.advance(Duration.ofHours(6).plusMinutes(1))
+        bmkg.failure = IOException("BMKG down")
+
+        repo.load(forceRefresh = true)
+
+        assertEquals(2, bmkg.calls.size)
+        assertNull(merge.last.bmkg)
+    }
+
+    @Test
+    fun repository_bmkgFails_ignoresCachedForecastForOtherKelurahan() = runTest {
+        val repo = repository()
+        repo.load(forceRefresh = true)
+        index.result = kemayoran.copy(code = "31.71.03.1002")
+        bmkg.failure = IOException("BMKG down")
+        clock.advance(Duration.ofMinutes(10))
+
+        repo.load(forceRefresh = true)
+
+        assertNull(merge.last.bmkg)
+    }
+
+    @OptIn(ExperimentalCoroutinesApi::class) // currentTime
+    @Test
+    fun repository_bmkgSlow_mergesWithoutItAfter6Seconds() = runTest {
+        bmkg.delayMillis = 20_000
+        val repo = repository()
+
+        val result = repo.load(forceRefresh = true)
+
+        assertTrue(result is LoadResult.Fresh)
+        assertNull(merge.last.bmkg)
+        assertEquals(6_000L, currentTime)
+
+        // A timeout counts as a failure, so the next fetch doesn't wait on BMKG again.
+        clock.advance(Duration.ofMinutes(5))
+        repo.load(forceRefresh = true)
+        assertEquals(1, bmkg.calls.size)
     }
 
     @Test
@@ -213,10 +322,21 @@ class DefaultWeatherRepositoryTest {
     @Test
     fun repository_noPermission_returnsNoLocation() = runTest {
         location.point = null
+        permissionGranted = false
 
         val result = repository().load(forceRefresh = true)
 
         assertEquals(LoadResult.NoLocation(permissionDenied = true), result)
+        assertEquals(0, openMeteo.calls)
+    }
+
+    @Test
+    fun repository_permissionButNoFix_returnsNoLocationNotDenied() = runTest {
+        location.point = null
+
+        val result = repository().load(forceRefresh = true)
+
+        assertEquals(LoadResult.NoLocation(permissionDenied = false), result)
         assertEquals(0, openMeteo.calls)
     }
 
@@ -267,6 +387,21 @@ class DefaultWeatherRepositoryTest {
         assertEquals(snapshot, repo.cached())
     }
 
+    @Test
+    fun repository_parsesAndMergesOnGivenDispatcher() = runTest {
+        val worker = Executors.newSingleThreadExecutor { Thread(it, "repo-worker") }.asCoroutineDispatcher()
+        try {
+            val repo = repository(worker)
+            repo.load(forceRefresh = true)
+
+            assertEquals("repo-worker", index.thread)
+            assertEquals("repo-worker", merge.thread)
+            assertTrue(repo.cached() != null)
+        } finally {
+            worker.close()
+        }
+    }
+
     // --- fakes ---
 
     private class MutableClock(var now: Instant) : Clock() {
@@ -291,14 +426,21 @@ class DefaultWeatherRepositoryTest {
     }
 
     private class FakeIndex(var result: Kelurahan?) : KelurahanIndex {
-        override fun nearest(lat: Double, lon: Double, maxKm: Double): Kelurahan? = result
+        /** The thread of the last lookup. */
+        var thread: String? = null
+        override fun nearest(lat: Double, lon: Double, maxKm: Double): Kelurahan? {
+            thread = Thread.currentThread().name
+            return result
+        }
     }
 
     private class FakeBmkg(var forecast: BmkgForecast) : BmkgClient {
         val calls = mutableListOf<String>()
         var failure: Exception? = null
+        var delayMillis = 0L
         override suspend fun forecast(adm4: String): BmkgForecast {
             calls += adm4
+            if (delayMillis > 0) delay(delayMillis)
             failure?.let { throw it }
             return forecast
         }
@@ -333,6 +475,9 @@ class DefaultWeatherRepositoryTest {
         val last get() = calls.last()
         var failure: Exception? = null
 
+        /** The thread of the last merge. */
+        var thread: String? = null
+
         fun invoke(
             place: Place,
             bmkg: BmkgForecast?,
@@ -342,6 +487,7 @@ class DefaultWeatherRepositoryTest {
             fetchedAt: Instant,
         ): WeatherSnapshot {
             calls += MergeCall(place, bmkg, om, air, now, fetchedAt)
+            thread = Thread.currentThread().name
             failure?.let { throw it }
             return SampleData.dayPartlyCloudy.copy(
                 place = place,
