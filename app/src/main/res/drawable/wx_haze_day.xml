@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Weather icon, 48-unit grid, drawn from the agreed mockups. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="48dp"
+    android:height="48dp"
+    android:viewportWidth="48"
+    android:viewportHeight="48">
+    <path android:strokeColor="#FFFFB300" android:strokeWidth="2.08" android:strokeLineCap="round" android:pathData="M34.40,17.00L37.60,17.00M31.35,24.35L33.62,26.62M24.00,27.40L24.00,30.60M16.65,24.35L14.38,26.62M13.60,17.00L10.40,17.00M16.65,9.65L14.38,7.38M24.00,6.60L24.00,3.40M31.35,9.65L33.62,7.38" />
+    <path android:fillColor="#FFFFC93C" android:fillAlpha="0.75" android:pathData="M16.00,17.00a8.00,8.00 0,1 1,16.00,0a8.00,8.00 0,1 1,-16.00,0z" />
+    <path android:strokeColor="#FFC8BFAE" android:strokeWidth="3" android:strokeLineCap="round" android:pathData="M9,29L39,29M13,35L35,35M9,41L31,41" />
+</vector>

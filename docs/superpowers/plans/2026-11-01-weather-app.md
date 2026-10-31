@@ -85,6 +85,7 @@
 - Create: `app/src/main/java/com/iwankurnia/weather/data/Contracts.kt`, for the interfaces below.
 - Create: `app/src/main/java/com/iwankurnia/weather/model/SampleData.kt`, holding the Jakarta values from the mockups (`SampleData.dayPartlyCloudy`, `SampleData.nightRain`).
 - Create: `app/src/main/res/xml/large_widget_info.xml`, `small_widget_info.xml`, launcher icon (adaptive, plus a monochrome layer for the themed icon).
+- Create: `res/drawable/wx_*.xml` (11 weather icons), `ui/icons/WeatherIconRes.kt`, `ui/background/CardColours.kt`, shared by Tasks 4–6.
 - Modify: `.gitignore` to add `build/`, `.gradle/`, `local.properties`, `.idea/`, `*.iml` and `.kotlin/`.
 
 **Interfaces (Produces):** every later task uses exactly these names.
@@ -257,7 +258,7 @@ Tests go in `app/src/test/java/com/iwankurnia/weather/domain/`, building source 
 
 **Interfaces:**
 - Consumes: `Condition`.
-- Produces: `WeatherBackground(...)`, and `fun cardTint(condition: Condition, isDay: Boolean): CardColours`, where `data class CardColours(val surface: Color, val onSurface: Color, val subtle: Color, val primary: Color, val onPrimary: Color, val container: Color, val onContainer: Color)` is used by the main screen. The colour values come from `mockups/backgrounds-day-night.html` and `mockups/rain-storm.html`, with the darker haze-day sky.
+- Produces: `WeatherBackground(...)`, and `fun cardTint(condition: Condition, isDay: Boolean): CardColours`, using `ui/background/CardColours.kt` from Task 1 (surface, onSurface, subtle, primary, onPrimary, container, onContainer, onSky). The main screen uses it. The colour values come from `mockups/backgrounds-day-night.html` and `mockups/rain-storm.html`, with the darker haze-day sky.
 
 - [ ] **Step 1: Write the failing tests in `RainModelTest`:**
   - `drops_recycleAtBottom`: after enough ticks, every drop has a y within [−len, height].
@@ -279,7 +280,7 @@ Tests go in `app/src/test/java/com/iwankurnia/weather/domain/`, building source 
 
 **Files:** create in `app/src/main/java/com/iwankurnia/weather/ui/`:
 - `theme/Theme.kt`, `theme/Type.kt`. Roboto Flex is bundled in `res/font/` (OFL); include its licence in `app/src/main/assets/licences/`.
-- `icons/WeatherIcons.kt`: `fun weatherIcon(condition: Condition, isDay: Boolean, showers: Boolean = false): ImageVector` for the 11 icons in `mockups/all-screens.html`, ported from the SVG paths and colours there.
+- Icons: already in Task 1. Use `ui/icons/WeatherIconRes.kt` (`weatherIconRes(condition, isDay, showers)`, `conditionLabel(condition, isDay)`) with `painterResource`. The `res/drawable/wx_*.xml` vectors are shared with the widgets. Interface icons come from `Icons.Rounded.*` (material-icons-extended).
 - `main/MainScreen.kt`, `main/Hero.kt`, `main/ForecastRow.kt`, `main/DailyList.kt`, `main/DetailTiles.kt`, `main/CreditsLine.kt`
 - `main/StateScreens.kt`: welcome, loading (Material 3 `LoadingIndicator`), location refused, service error, offline banner.
 - `main/MainViewModel.kt`, `main/MainUiState.kt`
