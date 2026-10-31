@@ -8,6 +8,6 @@
     <path android:strokeColor="#FFFFB300" android:strokeWidth="2.08" android:strokeLineCap="round" android:pathData="M27.40,17.00L30.60,17.00M24.65,23.65L26.91,25.91M18.00,26.40L18.00,29.60M11.35,23.65L9.09,25.91M8.60,17.00L5.40,17.00M11.35,10.35L9.09,8.09M18.00,7.60L18.00,4.40M24.65,10.35L26.91,8.09" />
     <path android:fillColor="#FFFFC93C" android:pathData="M11.00,17.00a7.00,7.00 0,1 1,14.00,0a7.00,7.00 0,1 1,-14.00,0z" />
     <group android:translateX="3" android:translateY="2">
-      <path android:fillColor="#FFFFFFFF" android:pathData="M15,37h19a7.5,7.5 0,0 0,1 -14.93A10.5,10.5 0,0 0,15.4 21a8,8 0,0 0,-0.4 16z" />
+      <path android:fillColor="#FFFFFFFF" android:strokeColor="#FFC3CCD8" android:strokeWidth="1" android:pathData="M15,37h19a7.5,7.5 0,0 0,1 -14.93A10.5,10.5 0,0 0,15.4 21a8,8 0,0 0,-0.4 16z" />
     </group>
 </vector>

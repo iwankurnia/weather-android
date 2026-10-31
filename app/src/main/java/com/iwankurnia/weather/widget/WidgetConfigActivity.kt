@@ -120,8 +120,9 @@ class WidgetConfigActivity : ComponentActivity() {
         lifecycleScope.launch {
             val context = applicationContext
             WidgetPrefs.setOpacity(context, appWidgetId, opacityPct)
-            val widget: GlanceAppWidget = if (isSmallWidget()) SmallWidget() else LargeWidget()
-            runCatching { widget.update(context, GlanceAppWidgetManager(context).getGlanceIdBy(appWidgetId)) }
+            // updateAll, not update: it also makes running widget sessions re-read the permissions
+            // just granted on the previous screen.
+            runCatching { WidgetUpdater.updateAll(context) }
             WidgetUpdater.schedule(context)
             WidgetUpdater.refreshNow(context)
             setResult(RESULT_OK, resultIntent())
@@ -272,22 +273,13 @@ private fun SettingsSheet(
         Surface(shape = RoundedCornerShape(28.dp), color = MaterialTheme.colorScheme.surface, shadowElevation = 6.dp) {
             Column(Modifier.fillMaxWidth().padding(start = 20.dp, end = 20.dp, top = 20.dp, bottom = 22.dp)) {
                 Text("Widget settings", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.SemiBold)
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
+                // Plain text: an inline icon after a wrapping Text in a Row gets pushed off the edge.
+                Text(
+                    "You can change this later: long-press the widget, then tap the pencil.",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.padding(top = 8.dp, bottom = 14.dp),
-                ) {
-                    Text(
-                        "You can change this later: long-press the widget and tap ",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
-                    Icon(
-                        Icons.Rounded.Edit,
-                        contentDescription = "Edit",
-                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                        modifier = Modifier.size(16.dp),
-                    )
-                }
+                )
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Icon(Icons.Rounded.Opacity, contentDescription = null, modifier = Modifier.size(20.dp))
                     Spacer(Modifier.width(6.dp))

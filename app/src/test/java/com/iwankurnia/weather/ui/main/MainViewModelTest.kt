@@ -156,7 +156,8 @@ class MainViewModelTest {
         val vm = MainViewModel(repo)
         vm.refresh(false)
         runCurrent()
-        assertEquals(MainUiState.Ready(cached, staleSince = cached.fetchedAt), vm.state.value)
+        // No offline banner while the refresh is still running: nothing has failed yet.
+        assertEquals(MainUiState.Ready(cached, staleSince = null), vm.state.value)
         assertTrue(vm.refreshing.value)
 
         repo.gate!!.complete(Unit)

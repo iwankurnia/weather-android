@@ -46,7 +46,8 @@ class MainViewModel(private val repo: WeatherRepository) : ViewModel() {
 
     /**
      * Loads the weather; [force] skips any freshness shortcuts in the repository. With no weather
-     * on screen, the cached snapshot (if any) is shown first, marked as old and refreshing.
+     * on screen, the cached snapshot (if any) is shown first while refreshing; it is only marked
+     * as old (offline banner) if the refresh then fails.
      */
     fun refresh(force: Boolean) {
         if (job?.isActive == true) return
@@ -59,7 +60,7 @@ class MainViewModel(private val repo: WeatherRepository) : ViewModel() {
         job = viewModelScope.launch {
             var base = shown
             if (showCache) {
-                base = cachedSnapshot()?.let { MainUiState.Ready(it, staleSince = it.fetchedAt) }
+                base = cachedSnapshot()?.let { MainUiState.Ready(it, staleSince = null) }
                 if (base != null) {
                     _state.value = base
                     _refreshing.value = true
