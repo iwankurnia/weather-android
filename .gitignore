@@ -1,2 +1,9 @@
 .DS_Store
 .superpowers/
+build/
+.gradle/
+.kotlin/
+local.properties
+.idea/
+*.iml
+captures/

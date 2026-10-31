@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Partly-cloudy icon from the mockups (48-unit grid), centred in the 66dp safe zone. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="72"
+    android:viewportHeight="72">
+    <group android:translateX="12" android:translateY="12">
+        <path android:strokeColor="#FFFFB300" android:strokeWidth="2.1" android:strokeLineCap="round"
+            android:pathData="M27.4,17L30.6,17M24.6,23.6L26.9,25.9M18,26.4L18,29.6M11.4,23.6L9.1,25.9M8.6,17L5.4,17M11.4,10.4L9.1,8.1M18,7.6L18,4.4M24.6,10.4L26.9,8.1" />
+        <path android:fillColor="#FFFFC93C"
+            android:pathData="M18,17m-7,0a7,7 0,1 1,14 0a7,7 0,1 1,-14 0" />
+        <path android:fillColor="#FFFFFFFF"
+            android:pathData="M18,39h19a7.5,7.5 0,0 0,1 -14.93A10.5,10.5 0,0 0,18.4 23a8,8 0,0 0,-0.4 16z" />
+    </group>
+</vector>
