@@ -20,7 +20,10 @@ import androidx.glance.text.FontWeight
 import androidx.glance.text.Text
 import com.iwankurnia.weather.ui.icons.conditionLabel
 
-/** The 2×2 widget: area, temperature, "feels like" pill and condition. */
+/**
+ * The 2×2 widget: area, temperature, "feels like" pill and condition. When the location may be
+ * out of date, a smaller hint replaces the condition text.
+ */
 class SmallWidget : GlanceAppWidget() {
     override suspend fun provideGlance(context: Context, id: GlanceId) {
         val appWidgetId = GlanceAppWidgetManager(context).getAppWidgetId(id)
@@ -36,7 +39,7 @@ class SmallWidget : GlanceAppWidget() {
 @Composable
 private fun SmallWidgetContent(state: WidgetState, style: WidgetTextStyle) {
     val colours = widgetColours(style)
-    val snapshot = state.snapshot ?: return SetUpPrompt(colours)
+    val snapshot = state.snapshot ?: return Placeholder(state.placeholderText(), colours)
     val now = snapshot.now
     Column(modifier = GlanceModifier.widgetCard(colours, 14.dp)) {
         Text(
@@ -52,7 +55,13 @@ private fun SmallWidgetContent(state: WidgetState, style: WidgetTextStyle) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             WeatherIcon(snapshot, colours, 16.dp)
             Spacer(GlanceModifier.width(4.dp))
-            Text(conditionLabel(now.condition, now.isDay), style = textStyle(colours.text, 11.sp), maxLines = 1)
+            // No room for both: the hint takes the condition's place, which the icon still shows.
+            val hint = state.staleHint()
+            if (hint != null) {
+                StaleHint(hint, colours, maxLines = 2)
+            } else {
+                Text(conditionLabel(now.condition, now.isDay), style = textStyle(colours.text, 11.sp), maxLines = 1)
+            }
         }
     }
 }

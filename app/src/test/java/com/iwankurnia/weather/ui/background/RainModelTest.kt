@@ -108,6 +108,63 @@ class RainModelTest {
         assertTrue(storm.flash < first)
     }
 
+    @Test
+    fun boltAlpha_dipsOnlyTheChosenNumberOfTimes() {
+        for (flickers in 1..2) {
+            var life = 1f
+            var previous = 1f
+            var dips = 0
+            while (life > 0f) {
+                val alpha = RainModel.boltAlphaFor(life, flickers)
+                if (alpha == RainModel.FLICKER_ALPHA && previous == 1f) dips++
+                if (life <= 0.6f) assertTrue("fades after the fresh phase", alpha <= previous || previous == 1f)
+                previous = alpha
+                life -= 0.025f
+            }
+            assertEquals(flickers, dips)
+        }
+        assertEquals(0f, RainModel.boltAlphaFor(0f, 1), 0f)
+    }
+
+    @Test
+    fun bolt_flickersOnceOrTwicePerStrike() {
+        val storm = model(storm = true, seed = 11)
+        val seen = mutableSetOf<Int>()
+        var strike = 0
+        var flickers = 0
+        var dips = 0
+        var previous = 0f
+        // About two minutes of frames.
+        repeat(7_200) {
+            storm.tick(FRAME_MS)
+            if (storm.strikeCount != strike) {
+                if (strike > 0) {
+                    assertEquals("strike $strike", flickers, dips)
+                    seen += dips
+                }
+                strike = storm.strikeCount
+                flickers = storm.boltFlickers
+                dips = 0
+            }
+            val alpha = storm.boltAlpha
+            if (alpha == RainModel.FLICKER_ALPHA && previous == 1f) dips++
+            previous = alpha
+        }
+        assertTrue("expected several strikes, got $strike", strike >= 10)
+        assertEquals(setOf(1, 2), seen)
+    }
+
+    @Test
+    fun bolt_flickerIsRepeatableForASeed() {
+        val a = model(storm = true, seed = 5)
+        val b = model(storm = true, seed = 5)
+        repeat(1_500) {
+            a.tick(FRAME_MS)
+            b.tick(FRAME_MS)
+            assertEquals(a.boltAlpha, b.boltAlpha, 0f)
+        }
+    }
+
     private companion object {
         const val FRAME_MS = 16.7f
     }

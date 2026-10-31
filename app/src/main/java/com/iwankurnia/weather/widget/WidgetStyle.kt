@@ -73,22 +73,38 @@ internal data class WidgetState(
     val snapshot: WeatherSnapshot?,
     /** True without "Allow all the time" location: the area may be where the phone last was. */
     val locationMayBeStale: Boolean,
+    /** True with normal location access, so a first refresh can find the area on its own. */
+    val canLocate: Boolean = false,
 )
 
 internal suspend fun loadWidgetState(context: Context): WidgetState {
     val snapshot = runCatching { context.weatherRepositoryProvider()?.snapshotCache?.snapshot() }.getOrNull()
-    val background = context.checkSelfPermission(Manifest.permission.ACCESS_BACKGROUND_LOCATION) ==
-        PackageManager.PERMISSION_GRANTED
-    return WidgetState(snapshot, locationMayBeStale = !background)
+    fun granted(permission: String) = context.checkSelfPermission(permission) == PackageManager.PERMISSION_GRANTED
+    return WidgetState(
+        snapshot = snapshot,
+        locationMayBeStale = !granted(Manifest.permission.ACCESS_BACKGROUND_LOCATION),
+        canLocate = granted(Manifest.permission.ACCESS_COARSE_LOCATION) ||
+            granted(Manifest.permission.ACCESS_FINE_LOCATION),
+    )
 }
 
-/** Text shown in place of the area name when background location is refused. */
+/** Small hint shown under the area name when background location is refused. */
 internal const val LOCATION_STALE_TEXT = "Location may be out of date"
 
 internal const val SET_UP_TEXT = "Open Weather to set up"
 
-internal fun WidgetState.areaLine(): String =
-    if (locationMayBeStale) LOCATION_STALE_TEXT else snapshot?.place?.areaName.orEmpty()
+internal const val UPDATING_TEXT = "Updating…"
+
+internal fun WidgetState.areaLine(): String = snapshot?.place?.areaName.orEmpty()
+
+/** The "out of date" hint, or null while the area is kept current. */
+internal fun WidgetState.staleHint(): String? = if (locationMayBeStale) LOCATION_STALE_TEXT else null
+
+/**
+ * Shown while there is nothing cached: with location access the first refresh is on its way,
+ * otherwise the app has to be opened first.
+ */
+internal fun WidgetState.placeholderText(): String = if (canLocate) UPDATING_TEXT else SET_UP_TEXT
 
 /**
  * Collects the widget's state and opacity so a running Glance session redraws when the cache
@@ -225,10 +241,29 @@ internal fun FeelsPill(snapshot: WeatherSnapshot, colours: WidgetColours) {
     }
 }
 
-/** Shown before the app has been opened or wired up. */
+/** Shown before there is anything cached: [WidgetState.placeholderText]. */
 @Composable
-internal fun SetUpPrompt(colours: WidgetColours) {
+internal fun Placeholder(text: String, colours: WidgetColours) {
     Box(modifier = GlanceModifier.widgetCard(colours, 16.dp), contentAlignment = Alignment.Center) {
-        Text(SET_UP_TEXT, style = textStyle(colours.text, 14.sp, FontWeight.Medium, TextAlign.Center))
+        Text(text, style = textStyle(colours.text, 14.sp, FontWeight.Medium, TextAlign.Center))
+    }
+}
+
+/**
+ * The small "Location may be out of date" line. Over the wallpaper it sits on the same dark
+ * translucent backdrop as the icon, so it stays readable at every opacity.
+ */
+@Composable
+internal fun StaleHint(text: String, colours: WidgetColours, maxLines: Int = 1) {
+    val label = @Composable {
+        Text(text, style = textStyle(colours.subtle, 10.sp, FontWeight.Medium), maxLines = maxLines)
+    }
+    val backdrop = colours.iconBackdrop
+    if (backdrop == null) {
+        label()
+    } else {
+        Box(modifier = GlanceModifier.background(backdrop).cornerRadius(8.dp).padding(horizontal = 6.dp, vertical = 1.dp)) {
+            label()
+        }
     }
 }

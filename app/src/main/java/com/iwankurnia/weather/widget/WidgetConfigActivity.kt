@@ -82,7 +82,8 @@ import kotlinx.coroutines.launch
  *
  * Without "Allow all the time" location it first explains why it is needed; "Continue" asks for
  * it (Android 11+ opens the settings page), "Not now" skips. Then the opacity settings with a
- * live preview; "Done" saves, redraws the widget and confirms the configuration.
+ * live preview; "Done" saves, redraws the widget, starts a refresh right away and confirms the
+ * configuration.
  */
 class WidgetConfigActivity : ComponentActivity() {
 
@@ -122,6 +123,7 @@ class WidgetConfigActivity : ComponentActivity() {
             val widget: GlanceAppWidget = if (isSmallWidget()) SmallWidget() else LargeWidget()
             runCatching { widget.update(context, GlanceAppWidgetManager(context).getGlanceIdBy(appWidgetId)) }
             WidgetUpdater.schedule(context)
+            WidgetUpdater.refreshNow(context)
             setResult(RESULT_OK, resultIntent())
             finish()
         }
@@ -161,8 +163,9 @@ private fun WidgetConfigScreen(
         value = runCatching { context.weatherRepositoryProvider()?.snapshotCache?.snapshot() }.getOrNull()
     }
 
-    // Whatever the answer, carry on to the opacity settings.
+    // Whatever the answer, refresh with the access there now is and carry on to the opacity settings.
     val backgroundLauncher = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) {
+        WidgetUpdater.refreshNow(context)
         step = ConfigStep.SETTINGS
     }
     // Android only offers "all the time" once normal location access is granted.

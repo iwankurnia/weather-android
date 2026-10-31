@@ -8,8 +8,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LongState
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.BlurredEdgeTreatment
-import androidx.compose.ui.draw.blur
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.draw.drawWithCache
 import androidx.compose.ui.geometry.Offset
@@ -20,9 +18,9 @@ import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.drawscope.clipRect
 import androidx.compose.ui.graphics.drawscope.drawIntoCanvas
 import androidx.compose.ui.graphics.drawscope.withTransform
-import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.nativeCanvas
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalDensity
@@ -55,7 +53,8 @@ private fun Color.dimmed(factor: Float) = Color(red * factor, green * factor, bl
 
 /**
  * One `.band`: 160% of the screen wide, 210 dp tall, rolling ±8% of its width with CSS
- * ease-in-out. [reverse] starts at the far end (`alternate-reverse`).
+ * ease-in-out. [reverse] starts at the far end (`alternate-reverse`). The band is blurred once
+ * (`blur(12px)`, 14 px at night) and then only rolled.
  */
 @Composable
 private fun CloudBand(
@@ -67,39 +66,35 @@ private fun CloudBand(
     reverse: Boolean,
 ) {
     Spacer(
-        Modifier
-            .fillMaxSize()
-            .graphicsLayer { this.alpha = alpha }
-            .blur(if (isDay) 12.dp else 14.dp, BlurredEdgeTreatment.Unbounded)
-            .drawWithCache {
-                val bandWidth = 1.6f * size.width
-                val bandLeft = -0.3f * size.width
-                val bandTop = topDp.dp.toPx()
-                val bandHeight = 210.dp.toPx()
-                val roll = 0.08f * bandWidth
-                val count = BandBlobs.size
-                val centres = Array(count) {
-                    Offset(bandLeft + BandBlobs[it].cx * bandWidth, bandTop + BandBlobs[it].cy * bandHeight)
-                }
-                val radii = FloatArray(count) { BandBlobs[it].rx.dp.toPx() }
-                val squash = FloatArray(count) { BandBlobs[it].ry / BandBlobs[it].rx }
-                val brushes = Array(count) {
-                    val c = if (isDay) BandBlobs[it].colour else BandBlobs[it].colour.dimmed(0.45f)
-                    Brush.radialGradient(listOf(c, c.copy(alpha = 0f)), Offset.Zero, radii[it])
-                }
-                onDrawBehind {
-                    val p = pingPong(clock.longValue, halfPeriodMs, CssEaseInOut)
-                    val dx = roll * if (reverse) 1f - 2f * p else -1f + 2f * p
-                    for (i in 0 until count) {
+        Modifier.fillMaxSize().drawWithCache {
+            val bandWidth = 1.6f * size.width
+            val bandLeft = -0.3f * size.width
+            val bandTop = topDp.dp.toPx()
+            val bandHeight = 210.dp.toPx()
+            val roll = 0.08f * bandWidth
+            val radii = FloatArray(BandBlobs.size) { BandBlobs[it].rx.dp.toPx() }
+            val band = blurredSprite(bandWidth, bandHeight, (if (isDay) 12.dp else 14.dp).toPx()) {
+                // A CSS background stays inside its box.
+                clipRect(0f, 0f, bandWidth, bandHeight) {
+                    for (i in BandBlobs.indices) {
+                        val blob = BandBlobs[i]
+                        val c = if (isDay) blob.colour else blob.colour.dimmed(0.45f)
+                        val brush = Brush.radialGradient(listOf(c, c.copy(alpha = 0f)), Offset.Zero, radii[i])
                         withTransform({
-                            translate(centres[i].x + dx, centres[i].y)
-                            scale(1f, squash[i], Offset.Zero)
+                            translate(blob.cx * bandWidth, blob.cy * bandHeight)
+                            scale(1f, blob.ry / blob.rx, Offset.Zero)
                         }) {
-                            drawCircle(brushes[i], radii[i], Offset.Zero)
+                            drawCircle(brush, radii[i], Offset.Zero)
                         }
                     }
                 }
-            },
+            }
+            onDrawBehind {
+                val p = pingPong(clock.longValue, halfPeriodMs, CssEaseInOut)
+                val dx = roll * if (reverse) 1f - 2f * p else -1f + 2f * p
+                drawSprite(band, Offset(bandLeft + dx, bandTop), alpha)
+            }
+        },
     )
 }
 
@@ -126,12 +121,19 @@ private class RainPaint(density: Float, isDay: Boolean) {
     var builtStrike = -1
     private val boltWidth = 5f * unit
     private val branchWidth = 2.5f * unit
-    val boltPaint = NativePaint(NativePaint.ANTI_ALIAS_FLAG).apply {
+    val boltPaint = strokePaint(android.graphics.Color.WHITE)
+
+    // `shadowBlur: 40` on the 2× canvas: a cool glow, bluer at night. `setShadowLayer` is ignored
+    // for paths on a hardware canvas, so the glow is three wider, fainter strokes under the core.
+    private val glowColour = (if (isDay) Color(0xFFE6ECFF) else Color(0xFFB9C8FF)).toArgb()
+    private val glowPaint = strokePaint(glowColour).apply { strokeCap = NativePaint.Cap.ROUND }
+    private val glowWidths = floatArrayOf(36f * unit, 22f * unit, 12f * unit)
+    private val glowAlphas = floatArrayOf(0.07f, 0.12f, 0.22f)
+
+    private fun strokePaint(colour: Int) = NativePaint(NativePaint.ANTI_ALIAS_FLAG).apply {
         style = NativePaint.Style.STROKE
         strokeJoin = NativePaint.Join.ROUND
-        color = android.graphics.Color.WHITE
-        // `shadowBlur: 40` on the 2× canvas; a cool glow, bluer at night.
-        setShadowLayer(20f * unit, 0f, 0f, (if (isDay) Color(0xFFE6ECFF) else Color(0xFFB9C8FF)).toArgb())
+        color = colour
     }
 
     fun rebuildBolt(model: RainModel) {
@@ -152,6 +154,14 @@ private class RainPaint(density: Float, isDay: Boolean) {
     fun drawBolt(scope: DrawScope, alpha: Float) {
         scope.drawIntoCanvas { canvas ->
             val native = canvas.nativeCanvas
+            for (i in glowWidths.indices) {
+                glowPaint.alpha = (glowAlphas[i] * alpha * 255f).toInt().coerceIn(0, 255)
+                // Branches are half the bolt's width, so their glow is too.
+                glowPaint.strokeWidth = glowWidths[i]
+                native.drawPath(boltPath, glowPaint)
+                glowPaint.strokeWidth = glowWidths[i] * 0.5f
+                native.drawPath(branchPath, glowPaint)
+            }
             boltPaint.alpha = (alpha * 255f).toInt().coerceIn(0, 255)
             boltPaint.strokeWidth = boltWidth
             native.drawPath(boltPath, boltPaint)
