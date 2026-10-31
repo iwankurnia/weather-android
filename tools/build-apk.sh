@@ -38,7 +38,8 @@ APK=app/build/outputs/apk/debug/app-debug.apk
 
 AAPT2=$(ls -d "${ANDROID_HOME:-$HOME/Library/Android/sdk}"/build-tools/*/aapt2 2>/dev/null | sort | tail -1)
 [[ -x "$AAPT2" ]] || die "aapt2 not found under the Android SDK build-tools"
-BADGING=$("$AAPT2" dump badging "$APK" | head -1)
+# sed, not head: head closes the pipe early, which pipefail turns into a failure.
+BADGING=$("$AAPT2" dump badging "$APK" | sed -n 1p)
 echo "$BADGING"
 [[ "$BADGING" == *"versionCode='$CODE'"* && "$BADGING" == *"versionName='$NAME'"* ]] \
     || die "APK version does not match version.properties ($NAME / $CODE)"
