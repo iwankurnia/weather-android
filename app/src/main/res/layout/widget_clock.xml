@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Time and date for the large widget. TextClock ticks on its own, so the widget needs no
+    minute updates. Two copies: plain (colour set from code to the system scheme) and, at 40%
+    opacity or lower, white with a soft shadow. Code shows one and hides the other.
+-->
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content">
+
+    <LinearLayout
+        android:id="@+id/clock_plain"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="vertical">
+
+        <TextClock
+            android:id="@+id/clock_time"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:fontFamily="sans-serif-medium"
+            android:format12Hour="HH:mm"
+            android:format24Hour="HH:mm"
+            android:includeFontPadding="false"
+            android:maxLines="1"
+            android:textColor="?android:attr/textColorPrimary"
+            android:textSize="38sp" />
+
+        <TextClock
+            android:id="@+id/clock_date"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
+            android:fontFamily="sans-serif-medium"
+            android:format12Hour="EEEE, d MMMM"
+            android:format24Hour="EEEE, d MMMM"
+            android:includeFontPadding="false"
+            android:maxLines="1"
+            android:textColor="?android:attr/textColorPrimary"
+            android:textSize="12sp" />
+    </LinearLayout>
+
+    <LinearLayout
+        android:id="@+id/clock_shadow"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:visibility="gone">
+
+        <TextClock
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:fontFamily="sans-serif-medium"
+            android:format12Hour="HH:mm"
+            android:format24Hour="HH:mm"
+            android:includeFontPadding="false"
+            android:maxLines="1"
+            android:shadowColor="#73000000"
+            android:shadowDy="1"
+            android:shadowRadius="4"
+            android:textColor="#FFFFFFFF"
+            android:textSize="38sp" />
+
+        <TextClock
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
+            android:fontFamily="sans-serif-medium"
+            android:format12Hour="EEEE, d MMMM"
+            android:format24Hour="EEEE, d MMMM"
+            android:includeFontPadding="false"
+            android:maxLines="1"
+            android:shadowColor="#73000000"
+            android:shadowDy="1"
+            android:shadowRadius="4"
+            android:textColor="#FFFFFFFF"
+            android:textSize="12sp" />
+    </LinearLayout>
+</FrameLayout>
