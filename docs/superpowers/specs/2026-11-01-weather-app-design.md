@@ -38,14 +38,14 @@ Agreed mockup: `mockups/app-screen.html` (day: partly cloudy; night: rain). Full
 
 1. **Top bar:** a location chip showing the local area (for example "Kebayoran Baru"), plus a round refresh button. The settings button in the mockup is dropped because there is nothing to set; see "Decided by Claude".
 2. **Summary:** a large current temperature, the condition ("Partly cloudy"), and today's high and low. Next to them, "Feels like 39°" sits in a filled, scalloped "cookie" shape in the primary colour.
-3. **Hourly card:** a one-line summary (for example "Rain likely from around 16:00. Very hot until then."), then a row of pill-shaped hourly items showing the time, temperature, an icon and chance of rain. "Now" is highlighted.
-4. **10-day forecast:** a grouped list in the Android 16 Settings style (one rounded group with small gaps between rows). Each row shows the day, an icon, chance of rain, the low, a range bar and the high.
+3. **Forecast card:** a one-line summary (for example "Rain likely from around 16:00. Very hot until then."), then a row of pill-shaped items in BMKG's 3-hour steps (Now, 16:00, 19:00, 22:00, …) showing the time, temperature, an icon and chance of rain. "Now" is highlighted. The row scrolls sideways across the next 24 hours.
+4. **10-day forecast:** a grouped list in the Android 16 Settings style (one rounded group with small gaps between rows). Each row shows the day, an icon, chance of rain, the low, a range bar and the high. Days 1–3 come from BMKG and days 4–10 from Open-Meteo; see "Data sources".
 5. **Detail tiles**, two per row:
    - UV index, in a sun-shaped badge.
    - Air quality, in a four-lobed badge.
    - Humidity, with a fill level and the dew point.
    - Wind, with a direction dial.
-   - Rainfall in the last 24 hours, plus the amount expected tomorrow.
+   - Rainfall in the last 24 hours (Open-Meteo), plus the amount expected tomorrow (BMKG).
    - Sunset and sunrise, with an arc showing where the sun is now.
 
    Visibility appeared in an early mockup and is optional.
@@ -103,6 +103,39 @@ The widget always shows the phone's current area, even when the app hasn't been 
 - **If "all the time" is refused:** the widget falls back to the last location the app saw. It shows a small "Location may be out of date" hint until the permission is granted.
 - **Accuracy:** approximate (city-district level) is enough for weather and is gentler on the battery. *Claude's call.*
 
+## Data sources (Iwan's decision, 2026-11-01)
+
+Chosen to fit Jakarta best: Indonesia's own weather agency first, with free global data filling the gaps and real station readings for air quality.
+
+| What | Source | Notes |
+|---|---|---|
+| Conditions, temperature, humidity, wind, rain amount, days 1–3 | **BMKG open data** (`api.bmkg.go.id/publik/prakiraan-cuaca?adm4=<kelurahan code>`) | Official forecast for each kelurahan, 3-hour steps, 3 days, refreshed by BMKG twice a day. Free, no key. Limit 60 requests a minute. **BMKG must be credited** wherever its data appears. |
+| Chance of rain, UV index, sunrise and sunset, days 4–10, rainfall in the last 24 hours | **Open-Meteo** | Free, no key. Global models only for Indonesia (about 9 km). |
+| Air quality (US AQI) | **WAQI / aqicn.org** geo feed (`/feed/geo:<lat>;<lng>/`) | Real readings from the nearest monitoring station. A free token is needed, which Iwan requests himself. Free for personal, non-paid apps. **Credit the World Air Quality Index Project and the originating agency.** |
+
+- **"Now":** BMKG has forecasts, not live readings. "Now" is the BMKG step covering the current time, with temperature and humidity interpolated between the neighbouring steps.
+- **"Feels like":** BMKG doesn't provide it, so the app works it out from BMKG's temperature and humidity using the standard heat-index formula (NOAA). That keeps it consistent with the temperature shown, and it suits Jakarta's humid heat. When the heat index is below the temperature, it shows the temperature.
+- **Today's high and low:** taken from today's BMKG steps.
+- **Finding the kelurahan code:** the app ships a list of kelurahan/desa codes (BMKG's `adm4`, the Kemendagri area code) with their centre points, and picks the nearest one to the phone. Finding a suitable open dataset is a build task.
+- **Fallbacks:**
+  - If BMKG fails, has no data, or the phone is outside Indonesia (nearest kelurahan more than about 15 km away), Open-Meteo supplies everything. That includes its own "feels like" and its weather codes, where fog codes 45/48, or no rain with visibility under 5 km, count as haze.
+  - If WAQI fails or there is no token, air quality comes from Open-Meteo (CAMS model) and the tile says "modelled".
+- **Refresh:**
+  - BMKG at most once an hour, because it only updates twice a day.
+  - Open-Meteo and WAQI on every app open, pull to refresh, and widget refresh (about every 30 minutes).
+- **Credits line** at the bottom of the main screen: "Weather: BMKG · Open-Meteo.com · Air quality: WAQI · Updated hh:mm".
+
+**BMKG condition codes to the six backgrounds** (to check against BMKG's code list during the build):
+
+| Background | BMKG codes |
+|---|---|
+| Clear | 0 Cerah |
+| Partly cloudy | 1, 2 Cerah Berawan |
+| Cloudy | 3 Berawan, 4 Berawan Tebal |
+| Haze / fog | 5 Udara Kabur, 10 Asap, 45 Kabut |
+| Rain | 60, 61, 63 Hujan; 80 Hujan Lokal |
+| Thunderstorm | 95, 97 Hujan Petir |
+
 ## Units and formats
 
 Celsius, km/h, mm, 24-hour clock, dates such as "Sunday, 1 November", in English.
@@ -111,18 +144,19 @@ Celsius, km/h, mm, 24-hour clock, dates such as "Sunday, 1 November", in English
 
 - **Build tools:** Kotlin and Jetpack Compose with Material 3, matching his existing Android project (`~/Code/jk-bms-monitor`). The widget is built with Jetpack Glance.
 - **Supported Android versions:** Android 12 (API 31) and newer, because that's where system colours from the wallpaper start. It targets the newest Android version. Requiring Android 16 instead wouldn't save any work, because nothing here needs a fallback for older versions.
-- **Weather data:** Open-Meteo. It is free, needs no API key or account, and provides the "feels like" temperature, weather codes, day/night, hourly and 16-day forecasts, UV, sunrise and sunset, and air quality (US AQI scale, which matches the "156 Unhealthy" style in the mockup).
-- **Mapping weather codes to the six backgrounds:** Open-Meteo has no "haze" code. Fog codes 45 and 48 show as haze/fog. Haze is also shown when it is not raining and visibility is under 5 km.
-- **Area name:** taken from the phone's own address lookup (Android `Geocoder`) using the current coordinates.
+- **Weather data:** superseded by Iwan's decision; see "Data sources".
+- **Area name:** taken from the phone's own address lookup (Android `Geocoder`) using the current coordinates. If that returns nothing, the app uses BMKG's kelurahan name.
+- **WAQI token:** kept in `local.properties`, which is never committed, and read at build time.
 - **Freshness:** the app fetches when opened and when you pull to refresh. The widget refreshes on a schedule of roughly every 30 minutes.
 - **Offline:** if there is no connection, show the last fetched weather with an "Updated hh:mm" note, never an empty screen.
 - **Installation:** directly from Android Studio or `adb`, no Play Store listing.
-- **No settings screen.** Units and formats are fixed, so the settings button is dropped. Open-Meteo's required credit ("Weather data by Open-Meteo.com") and the "Updated hh:mm" time go in a small line at the bottom of the main screen.
-- **Hourly summary line:** looks ahead over the next 12 hours. The wording rules are:
-  - **Rain:** a chance of 50% or more counts as rain being "likely". The line names the first such hour ("Rain likely from around 16:00").
+- **No settings screen.** Units and formats are fixed, so the settings button is dropped. The data credits and the "Updated hh:mm" time go in a small line at the bottom of the main screen (see "Data sources").
+- **Forecast summary line:** looks ahead over the next 12 hours (four BMKG steps). The wording rules are:
+  - **Rain:** a step counts as rain being "likely" when BMKG forecasts rain or thunderstorm for it, or Open-Meteo's chance of rain at that time is 50% or more. The line names the first such step ("Rain likely from around 16:00").
   - **Heat:** a "feels like" of 38° or more counts as "very hot". The line says how long that lasts ("Very hot until 15:00").
   - **Neither:** the line says something plain, for example "Dry and warm for the next few hours."
   - **Tuning:** the 50% and 38° thresholds sit in one place so they are easy to adjust after a week of use.
+
 ## Left to the builder
 
 Package name, architecture inside the app, exact colour values (the mockups are guides, not specs), the icon set, and animation details. Testing approach should follow Iwan's usual workflow.
