@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.iwankurnia.weather.data.LoadResult
 import com.iwankurnia.weather.data.WeatherRepository
+import com.iwankurnia.weather.model.WeatherSnapshot
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -14,7 +15,7 @@ import kotlinx.coroutines.launch
 /**
  * Turns [WeatherRepository] results into [MainUiState].
  *
- * Nothing loads until [refresh] is called, so the caller can first decide between
+ * Nothing loads until [start] (or [refresh]) is called, so the caller can first decide between
  * [showWelcome] (no location permission yet) and a normal load.
  */
 class MainViewModel(private val repo: WeatherRepository) : ViewModel() {
@@ -27,13 +28,43 @@ class MainViewModel(private val repo: WeatherRepository) : ViewModel() {
     val refreshing: StateFlow<Boolean> = _refreshing.asStateFlow()
 
     private var job: Job? = null
+    private var started = false
 
-    /** Loads the weather; [force] skips any freshness shortcuts in the repository. */
+    /**
+     * Runs the launch flow once per ViewModel: a no-op after rotation, but runs again after
+     * process death, when the activity gets a fresh ViewModel.
+     */
+    fun start(hasLocation: Boolean, locationAsked: Boolean) {
+        if (started) return
+        started = true
+        when {
+            hasLocation -> refresh(force = false)
+            locationAsked -> showLocationDenied()
+            else -> showWelcome()
+        }
+    }
+
+    /**
+     * Loads the weather; [force] skips any freshness shortcuts in the repository. With no weather
+     * on screen, the cached snapshot (if any) is shown first, marked as old and refreshing.
+     */
     fun refresh(force: Boolean) {
         if (job?.isActive == true) return
-        val shown = _state.value as? MainUiState.Ready
+        val before = _state.value
+        val shown = before as? MainUiState.Ready
         if (shown != null) _refreshing.value = true else _state.value = MainUiState.Loading
+        // From a location screen, keep the spinner rather than flash weather it may take away.
+        val showCache = shown == null &&
+            before !is MainUiState.LocationDenied && before !is MainUiState.LocationUnavailable
         job = viewModelScope.launch {
+            var base = shown
+            if (showCache) {
+                base = cachedSnapshot()?.let { MainUiState.Ready(it, staleSince = it.fetchedAt) }
+                if (base != null) {
+                    _state.value = base
+                    _refreshing.value = true
+                }
+            }
             val result = try {
                 repo.load(force)
             } catch (e: CancellationException) {
@@ -41,9 +72,17 @@ class MainViewModel(private val repo: WeatherRepository) : ViewModel() {
             } catch (e: Exception) {
                 LoadResult.Failed(e.message ?: "Something went wrong")
             }
-            _state.value = map(result, shown)
+            _state.value = map(result, base)
             _refreshing.value = false
         }
+    }
+
+    private suspend fun cachedSnapshot(): WeatherSnapshot? = try {
+        repo.cached()
+    } catch (e: CancellationException) {
+        throw e
+    } catch (e: Exception) {
+        null
     }
 
     /** Shows the first-launch explanation (location permission not asked yet). */
@@ -59,8 +98,9 @@ class MainViewModel(private val repo: WeatherRepository) : ViewModel() {
     private fun map(result: LoadResult, shown: MainUiState.Ready?): MainUiState = when (result) {
         is LoadResult.Fresh -> MainUiState.Ready(result.snapshot, staleSince = null)
         is LoadResult.Stale -> MainUiState.Ready(result.snapshot, staleSince = result.snapshot.fetchedAt)
+        // Not denied means granted but no fix, for example with location services off.
         is LoadResult.NoLocation ->
-            if (result.permissionDenied) MainUiState.LocationDenied else MainUiState.Welcome
+            if (result.permissionDenied) MainUiState.LocationDenied else MainUiState.LocationUnavailable
         // Never blank the screen: keep what is shown and mark it as old.
         is LoadResult.Failed ->
             shown?.let { MainUiState.Ready(it.snapshot, staleSince = it.snapshot.fetchedAt) }

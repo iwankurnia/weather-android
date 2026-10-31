@@ -21,6 +21,9 @@ private val dateFormat = DateTimeFormatter.ofPattern("EEEE, d MMMM", ukLocale)
 private val timeFormat = DateTimeFormatter.ofPattern("HH:mm", ukLocale)
 private val hourFormat = DateTimeFormatter.ofPattern("HH", ukLocale)
 
+/** BMKG times, sunrise and sunset are all in Jakarta time (WIB), whatever the phone's zone. */
+val JakartaZone: ZoneId = ZoneId.of("Asia/Jakarta")
+
 /** Whole degrees with a degree sign, for example "33°". Never shows "-0°". */
 fun formatTemperature(celsius: Double): String {
     val whole = celsius.roundToInt()

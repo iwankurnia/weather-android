@@ -33,6 +33,7 @@ import androidx.compose.material3.pulltorefresh.PullToRefreshDefaults
 import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.produceState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -53,15 +54,29 @@ import java.time.Instant
 import java.time.LocalDate
 import java.time.LocalTime
 import java.time.ZoneId
+import java.time.ZonedDateTime
+import kotlinx.coroutines.delay
 
 /**
  * The app's only screen: renders [MainViewModel.state] inside [WeatherTheme].
  * Draw it edge to edge; it pads itself for the status and navigation bars.
  */
 @Composable
-fun WeatherRoute(viewModel: MainViewModel, onRequestLocation: () -> Unit, onOpenSettings: () -> Unit) {
+fun WeatherRoute(
+    viewModel: MainViewModel,
+    onRequestLocation: () -> Unit,
+    onOpenSettings: () -> Unit,
+    onOpenLocationSettings: () -> Unit,
+) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     val refreshing by viewModel.refreshing.collectAsStateWithLifecycle()
+    // Jakarta clock, ticking each minute so the sun arc and "Today" never go stale.
+    val clock by produceState(ZonedDateTime.now(JakartaZone)) {
+        while (true) {
+            delay(60_000L - System.currentTimeMillis() % 60_000L)
+            value = ZonedDateTime.now(JakartaZone)
+        }
+    }
     WeatherTheme {
         AnimatedContent(
             targetState = state,
@@ -76,12 +91,19 @@ fun WeatherRoute(viewModel: MainViewModel, onRequestLocation: () -> Unit, onOpen
                     onOpenSettings = onOpenSettings,
                     onTryAgain = { viewModel.refresh(true) },
                 )
+                MainUiState.LocationUnavailable -> LocationUnavailableScreen(
+                    onOpenLocationSettings = onOpenLocationSettings,
+                    onTryAgain = { viewModel.refresh(true) },
+                )
                 is MainUiState.Error -> ServiceErrorScreen(onTryAgain = { viewModel.refresh(true) })
                 is MainUiState.Ready -> MainScreen(
                     snapshot = shown.snapshot,
                     staleSince = shown.staleSince,
                     refreshing = refreshing,
                     onRefresh = { viewModel.refresh(true) },
+                    nowTime = clock.toLocalTime(),
+                    today = clock.toLocalDate(),
+                    zone = JakartaZone,
                 )
             }
         }
@@ -90,7 +112,8 @@ fun WeatherRoute(viewModel: MainViewModel, onRequestLocation: () -> Unit, onOpen
 
 /**
  * The weather itself: one long scrolling column over the weather background, with pull to
- * refresh. [nowTime], [today] and [zone] are parameters so previews stay fixed.
+ * refresh. [nowTime], [today] and [zone] are parameters so previews stay fixed; all are Jakarta
+ * time, like the BMKG, sunrise and sunset times they are compared with.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -100,9 +123,9 @@ fun MainScreen(
     refreshing: Boolean,
     onRefresh: () -> Unit,
     modifier: Modifier = Modifier,
-    nowTime: LocalTime = LocalTime.now(),
-    today: LocalDate = LocalDate.now(),
-    zone: ZoneId = ZoneId.systemDefault(),
+    nowTime: LocalTime = LocalTime.now(JakartaZone),
+    today: LocalDate = LocalDate.now(JakartaZone),
+    zone: ZoneId = JakartaZone,
 ) {
     val now = snapshot.now
     val colours = cardTint(now.condition, now.isDay)
