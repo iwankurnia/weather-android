@@ -16,7 +16,7 @@ class WaqiHttpClient(
 ) : AirClient {
     override suspend fun nearest(lat: Double, lon: Double): AirQuality? {
         if (token.isBlank()) return null
-        val encodedToken = URLEncoder.encode(token.trim(), Charsets.UTF_8)
+        val encodedToken = URLEncoder.encode(token.trim(), "UTF-8")
         val body = catchingOrNull { fetch("$BASE_URL/geo:${coord(lat)};${coord(lon)}/?token=$encodedToken") }
         return body?.let(WaqiParser::parse)
     }

@@ -13,6 +13,7 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
+import androidx.core.content.edit
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
@@ -96,7 +97,7 @@ class MainActivity : ComponentActivity() {
 
     private fun locationAsked() = getPreferences(MODE_PRIVATE).getBoolean(KEY_ASKED, false)
 
-    private fun markLocationAsked() = getPreferences(MODE_PRIVATE).edit().putBoolean(KEY_ASKED, true).apply()
+    private fun markLocationAsked() = getPreferences(MODE_PRIVATE).edit { putBoolean(KEY_ASKED, true) }
 
     private fun hasAnyWidget(): Boolean {
         val manager = AppWidgetManager.getInstance(this)

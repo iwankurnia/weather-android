@@ -6,3 +6,10 @@ A personal, ad-free weather app for Android 16, built with Kotlin, Jetpack Compo
 - Every screen and icon: open [docs/superpowers/specs/mockups/all-screens.html](docs/superpowers/specs/mockups/all-screens.html) in a browser.
 
 Weather data by [BMKG](https://data.bmkg.go.id/) and [Open-Meteo.com](https://open-meteo.com/). Air quality by the [World Air Quality Index Project](https://aqicn.org/).
+
+## Building
+
+Open in Android Studio, or run `./gradlew :app:installDebug` with a phone connected.
+
+- **Air quality token:** request a free token at <https://aqicn.org/data-platform/token/> and add `waqi.token=<your token>` to `local.properties`, which git ignores. Without it, air quality falls back to Open-Meteo's modelled reading.
+- **Kelurahan list:** `app/src/main/assets/kelurahan.csv` lists the Jabodetabek kelurahan with BMKG's own coordinates, so the app can pick the nearest BMKG forecast. To rebuild it, download `db/wilayah.sql` from [cahyadsn/wilayah](https://github.com/cahyadsn/wilayah) (MIT), then run `python3 tools/build_kelurahan.py wilayah.sql app/src/main/assets/kelurahan.csv`. It takes about 30 minutes, because BMKG allows 60 requests a minute.

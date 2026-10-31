@@ -42,7 +42,7 @@ class AssetKelurahanIndex(val rows: List<Kelurahan>) : KelurahanIndex {
         fun fromCsv(text: String): AssetKelurahanIndex {
             val lines = text.lineSequence().map { it.trimEnd('\r') }.filter { it.isNotBlank() }.toList()
             if (lines.isEmpty()) return AssetKelurahanIndex(emptyList())
-            val header = splitCsvLine(lines.first().removePrefix("﻿")).map { it.trim().lowercase() }
+            val header = splitCsvLine(lines.first().removePrefix("\uFEFF")).map { it.trim().lowercase() }
             val code = header.indexOf("code")
             val name = header.indexOf("kelurahan")
             val kecamatan = header.indexOf("kecamatan")
