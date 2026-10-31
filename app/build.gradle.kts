@@ -13,6 +13,14 @@ val localProps = Properties().apply {
 }
 val waqiToken = (localProps.getProperty("waqi.token") ?: "").trim()
 
+// Version lives in version.properties; tools/build-apk.sh bumps buildNumber before every build.
+val versionPropsFile = rootProject.file("version.properties")
+val versionProps = Properties().apply {
+    if (versionPropsFile.exists()) versionPropsFile.inputStream().use { load(it) }
+}
+val buildNumber = (versionProps.getProperty("buildNumber") ?: "1").trim().toInt()
+val marketingVersion = (versionProps.getProperty("marketingVersion") ?: "1.0").trim()
+
 android {
     namespace = "com.iwankurnia.weather"
     compileSdk {
@@ -23,8 +31,8 @@ android {
         applicationId = "com.iwankurnia.weather"
         minSdk = 31
         targetSdk = 37
-        versionCode = 1
-        versionName = "1.0"
+        versionCode = buildNumber
+        versionName = "$marketingVersion.$buildNumber"
         buildConfigField("String", "WAQI_TOKEN", "\"$waqiToken\"")
     }
 
@@ -73,4 +81,27 @@ dependencies {
 
     testImplementation(libs.junit)
     testImplementation(libs.kotlinx.coroutines.test)
+}
+
+/**
+ * Increments buildNumber in version.properties. Run it as its own Gradle invocation before
+ * assembling: versionCode is read at configuration time. tools/build-apk.sh does both.
+ */
+tasks.register("bumpBuildNumber") {
+    // Plain values only: the configuration cache can't serialise references into the script.
+    val propsFile = versionPropsFile
+    val current = buildNumber
+    val marketing = marketingVersion
+    doLast {
+        val next = current + 1
+        propsFile.writeText(
+            "# The app's version, the single source of truth.\n" +
+                "# marketingVersion: edited by hand when a release earns it.\n" +
+                "# buildNumber: bumped on EVERY build by tools/build-apk.sh (via :app:bumpBuildNumber); it is the\n" +
+                "#   APK's versionCode, and versionName is \"<marketingVersion>.<buildNumber>\".\n" +
+                "marketingVersion=$marketing\n" +
+                "buildNumber=$next\n",
+        )
+        println("build number -> $next (version $marketing.$next)")
+    }
 }
