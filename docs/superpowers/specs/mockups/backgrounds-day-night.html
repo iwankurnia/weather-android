@@ -1,0 +1,103 @@
+<style>
+  .grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(310px,1fr)); gap:22px; margin-top:18px; }
+  .pair h3 { margin:0 0 8px; font-size:15px; }
+  .two { display:flex; gap:10px; }
+  .ph { flex:1; border-radius:22px; padding:7px; background:#111; }
+  .sc { position:relative; overflow:hidden; border-radius:16px; height:210px; padding:12px; color:#fff; font-family:system-ui,sans-serif; }
+  .sc > .txt { position:relative; z-index:4; text-align:center; margin-top:48px; }
+  .t { font-size:46px; font-weight:200; line-height:1; }
+  .c { font-size:12px; opacity:.9; margin-top:4px; }
+  .tag { position:absolute; z-index:4; top:9px; left:11px; font-size:10px; letter-spacing:.06em; text-transform:uppercase; opacity:.75; }
+  /* day palettes */
+  .clear-d  { background:linear-gradient(180deg,#3d8fe0,#5eb0f2 60%,#9fd2f7); }
+  .pcloud-d { background:linear-gradient(180deg,#4c88c9,#6fa6d9 60%,#a8c9e6); }
+  .cloud-d  { background:linear-gradient(180deg,#7d8da1,#97a5b6 60%,#b6c0cc); }
+  .rain-d   { background:linear-gradient(180deg,#56687c,#6c7e92 60%,#8796a6); }
+  .storm-d  { background:linear-gradient(180deg,#363d4a,#4a5261 60%,#5d6573); }
+  .haze-d   { background:linear-gradient(180deg,#a89f8c,#bdb5a3 60%,#d2ccbd); }
+  /* night palettes */
+  .clear-n  { background:linear-gradient(180deg,#0b1030,#1a2257 60%,#2b3474); }
+  .pcloud-n { background:linear-gradient(180deg,#10162f,#222b52 60%,#343e69); }
+  .cloud-n  { background:linear-gradient(180deg,#1b1f28,#2a303c 60%,#3a4150); }
+  .rain-n   { background:linear-gradient(180deg,#121a23,#1d2834 60%,#2a3644); }
+  .storm-n  { background:linear-gradient(180deg,#07080c,#12151c 60%,#1d212b); }
+  .haze-n   { background:linear-gradient(180deg,#1c1b18,#2c2a25 60%,#3d3a33); }
+  /* layers */
+  .sun { position:absolute; z-index:1; width:150px; height:150px; border-radius:50%; top:-50px; right:-45px;
+         background:radial-gradient(circle,#fffbe0 0%,rgba(255,236,150,.8) 30%,rgba(255,220,120,0) 70%); animation:pulse 4s ease-in-out infinite; }
+  @keyframes pulse { 50% { transform:scale(1.1); opacity:.85; } }
+  .moon { position:absolute; z-index:1; top:14px; right:16px; width:28px; height:28px; border-radius:50%; box-shadow:-7px 5px 0 0 #f4f1d0; }
+  .stars { position:absolute; inset:0; z-index:1; animation:twinkle 3s ease-in-out infinite; background-image:
+      radial-gradient(1.4px 1.4px at 15% 12%,#fff,transparent), radial-gradient(1px 1px at 68% 8%,#fff,transparent),
+      radial-gradient(1.4px 1.4px at 82% 34%,#fff,transparent), radial-gradient(1px 1px at 38% 22%,#fff,transparent),
+      radial-gradient(1px 1px at 55% 45%,#fff,transparent), radial-gradient(1.4px 1.4px at 10% 50%,#fff,transparent),
+      radial-gradient(1px 1px at 90% 60%,#fff,transparent), radial-gradient(1px 1px at 28% 70%,#fff,transparent); }
+  @keyframes twinkle { 50% { opacity:.6; } }
+  .cl { position:absolute; z-index:2; height:36px; border-radius:36px; filter:blur(2px); animation:drift 16s linear infinite alternate; }
+  .cl::before { content:""; position:absolute; width:55%; height:140%; left:18%; top:-60%; border-radius:50%; background:inherit; }
+  .cl.d { background:rgba(255,255,255,.75); }
+  .cl.g { background:rgba(225,230,238,.6); }
+  .cl.n { background:rgba(150,160,185,.35); }
+  @keyframes drift { from { transform:translateX(-25px); } to { transform:translateX(30px); } }
+  .rain { position:absolute; inset:-40px 0 0 0; z-index:3;
+          background-image:repeating-linear-gradient(105deg,rgba(255,255,255,0) 0 9px,rgba(255,255,255,.35) 9px 10px,rgba(255,255,255,0) 10px 22px);
+          animation:fall .55s linear infinite; }
+  .rain.dim { opacity:.55; }
+  @keyframes fall { to { transform:translateY(40px); } }
+  .flash { position:absolute; inset:0; z-index:3; background:#fff; opacity:0; animation:flash 5s infinite; }
+  @keyframes flash { 0%,86%,100% { opacity:0; } 88% { opacity:.55; } 90% { opacity:0; } 92% { opacity:.35; } }
+  .fog { position:absolute; left:-40%; right:-40%; z-index:2; height:60px; border-radius:50%; filter:blur(14px); animation:drift 12s ease-in-out infinite alternate; }
+  .fog.d { background:rgba(255,255,255,.45); }
+  .fog.n { background:rgba(200,190,170,.18); }
+</style>
+
+<h2>Background by weather, with day and night versions</h2>
+<p class="subtitle">Temperature no longer changes the colour. Only the weather and the time of day do. Night begins at sunset and day at sunrise, using the real times for where you are. The animations are live.</p>
+
+<div class="grid">
+  <div class="pair"><h3>☀️ Clear</h3><div class="two">
+    <div class="ph"><div class="sc clear-d"><div class="tag">Day</div><div class="sun"></div><div class="txt"><div class="t">33°</div><div class="c">Sunny</div></div></div></div>
+    <div class="ph"><div class="sc clear-n"><div class="tag">Night</div><div class="stars"></div><div class="moon"></div><div class="txt"><div class="t">28°</div><div class="c">Clear</div></div></div></div>
+  </div></div>
+
+  <div class="pair"><h3>⛅ Partly cloudy</h3><div class="two">
+    <div class="ph"><div class="sc pcloud-d"><div class="tag">Day</div><div class="sun" style="opacity:.7"></div>
+      <div class="cl d" style="width:90px;top:30px;left:20px"></div><div class="cl d" style="width:70px;top:150px;left:60px;animation-duration:22s"></div>
+      <div class="txt"><div class="t">32°</div><div class="c">Partly cloudy</div></div></div></div>
+    <div class="ph"><div class="sc pcloud-n"><div class="tag">Night</div><div class="stars" style="opacity:.6"></div><div class="moon"></div>
+      <div class="cl n" style="width:90px;top:34px;left:14px"></div><div class="cl n" style="width:70px;top:150px;left:60px;animation-duration:22s"></div>
+      <div class="txt"><div class="t">28°</div><div class="c">Partly cloudy</div></div></div></div>
+  </div></div>
+
+  <div class="pair"><h3>☁️ Cloudy</h3><div class="two">
+    <div class="ph"><div class="sc cloud-d"><div class="tag">Day</div>
+      <div class="cl g" style="width:110px;top:22px;left:5px"></div><div class="cl g" style="width:90px;top:40px;left:80px;animation-duration:20s"></div><div class="cl g" style="width:100px;top:155px;left:30px;animation-duration:26s"></div>
+      <div class="txt"><div class="t">30°</div><div class="c">Cloudy</div></div></div></div>
+    <div class="ph"><div class="sc cloud-n"><div class="tag">Night</div>
+      <div class="cl n" style="width:110px;top:22px;left:5px"></div><div class="cl n" style="width:90px;top:40px;left:80px;animation-duration:20s"></div><div class="cl n" style="width:100px;top:155px;left:30px;animation-duration:26s"></div>
+      <div class="txt"><div class="t">27°</div><div class="c">Cloudy</div></div></div></div>
+  </div></div>
+
+  <div class="pair"><h3>🌧️ Rain</h3><div class="two">
+    <div class="ph"><div class="sc rain-d"><div class="tag">Day</div><div class="cl g" style="width:110px;top:18px;left:20px;opacity:.6"></div><div class="rain"></div>
+      <div class="txt"><div class="t">26°</div><div class="c">Rain</div></div></div></div>
+    <div class="ph"><div class="sc rain-n"><div class="tag">Night</div><div class="cl n" style="width:110px;top:18px;left:20px"></div><div class="rain dim"></div>
+      <div class="txt"><div class="t">25°</div><div class="c">Rain</div></div></div></div>
+  </div></div>
+
+  <div class="pair"><h3>⛈️ Thunderstorm</h3><div class="two">
+    <div class="ph"><div class="sc storm-d"><div class="tag">Day</div><div class="rain"></div><div class="flash"></div>
+      <div class="txt"><div class="t">25°</div><div class="c">Thunderstorm</div></div></div></div>
+    <div class="ph"><div class="sc storm-n"><div class="tag">Night</div><div class="rain dim"></div><div class="flash" style="animation-delay:1.5s"></div>
+      <div class="txt"><div class="t">24°</div><div class="c">Thunderstorm</div></div></div></div>
+  </div></div>
+
+  <div class="pair"><h3>🌫️ Haze / fog</h3><div class="two">
+    <div class="ph"><div class="sc haze-d"><div class="tag">Day</div><div class="fog d" style="top:30px"></div><div class="fog d" style="top:140px;animation-duration:16s"></div>
+      <div class="txt"><div class="t">32°</div><div class="c">Haze</div></div></div></div>
+    <div class="ph"><div class="sc haze-n"><div class="tag">Night</div><div class="fog n" style="top:30px"></div><div class="fog n" style="top:140px;animation-duration:16s"></div>
+      <div class="txt"><div class="t">28°</div><div class="c">Haze</div></div></div></div>
+  </div></div>
+</div>
+
+<p class="subtitle" style="margin-top:22px">I added <b>Haze</b> because Jakarta often has it. The "feels like" badge, the iOS-style cards and the widget stay as before; only the background changes.</p>

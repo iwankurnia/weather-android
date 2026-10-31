@@ -1,0 +1,197 @@
+<link href="https://fonts.googleapis.com/css2?family=Roboto+Flex:opsz,wdth,wght@8..144,25..151,100..1000&display=swap" rel="stylesheet">
+<style>
+  .wrap { display:flex; gap:32px; flex-wrap:wrap; justify-content:center; align-items:flex-start; margin-top:16px; }
+  .phone { width:340px; border-radius:44px; padding:10px; background:#0c0c0c; box-shadow:0 10px 30px rgba(0,0,0,.35); }
+  .scr { position:relative; overflow:hidden; border-radius:36px; padding:0 12px 22px; font-family:'Roboto Flex',system-ui,sans-serif; color:var(--hero); }
+  .day   { --hero:#fff; --surf:rgba(244,248,255,.92); --on:#0f2a4a; --sub:#45607f; --pri:#1f5fae; --onpri:#fff; --pc:#d6e5ff; --onpc:#0f2a4a; --div:#f4f8ff;
+           background:linear-gradient(180deg,#4c88c9,#6fa6d9 35%,#a8c9e6 70%,#c9dcee); }
+  .night { --hero:#eef1ff; --surf:rgba(28,36,48,.9); --on:#e4e9f5; --sub:#9fadc4; --pri:#a9c7ff; --onpri:#0b1d3d; --pc:#2b3a52; --onpc:#d8e4ff; --div:#141c26;
+           background:linear-gradient(180deg,#121a23,#1d2834 35%,#2a3644 70%,#2f3c4b); }
+  .z { position:relative; z-index:2; }
+  .sbar { display:flex; justify-content:space-between; font-size:13px; font-weight:500; padding:12px 14px 4px; }
+  .top { display:flex; align-items:center; justify-content:space-between; padding:8px 2px; }
+  .chip { display:flex; align-items:center; gap:6px; background:rgba(255,255,255,.2); border-radius:999px; padding:8px 14px; font-size:14px; font-weight:500; font-variation-settings:'wdth' 110; }
+  .night .chip { background:rgba(255,255,255,.1); }
+  .ib { width:40px; height:40px; border-radius:50%; display:grid; place-items:center; background:rgba(255,255,255,.2); font-size:16px; }
+  .night .ib { background:rgba(255,255,255,.1); }
+  .hero { padding:18px 6px 20px; display:flex; justify-content:space-between; align-items:flex-end; }
+  .temp { font-size:112px; line-height:.85; font-weight:350; font-variation-settings:'wdth' 125,'opsz' 144; letter-spacing:-4px; }
+  .cond { font-size:22px; font-weight:600; font-variation-settings:'wdth' 115; margin-top:12px; }
+  .hl { font-size:14px; opacity:.9; margin-top:2px; }
+  .feels { width:104px; height:104px; display:grid; place-items:center; text-align:center; background:var(--pri); color:var(--onpri); clip-path:polygon(100.00% 50.00%,99.80% 51.74%,99.21% 53.44%,98.29% 55.08%,97.12% 56.62%,95.79% 58.07%,94.43% 59.44%,93.12% 60.75%,91.98% 62.04%,91.06% 63.34%,90.41% 64.71%,90.03% 66.17%,89.89% 67.76%,89.94% 69.48%,90.10% 71.32%,90.27% 73.25%,90.35% 75.21%,90.26% 77.15%,89.91% 79.00%,89.27% 80.68%,88.30% 82.14%,87.03% 83.34%,85.49% 84.27%,83.73% 84.93%,81.84% 85.36%,79.89% 85.62%,77.96% 85.79%,76.12% 85.95%,74.42% 86.20%,72.88% 86.61%,71.50% 87.24%,70.27% 88.12%,69.14% 89.25%,68.08% 90.60%,67.01% 92.11%,65.90% 93.70%,64.70% 95.25%,63.38% 96.68%,61.93% 97.87%,60.36% 98.74%,58.68% 99.24%,56.93% 99.34%,55.16% 99.06%,53.39% 98.44%,51.66% 97.55%,50.00% 96.50%,48.41% 95.39%,46.90% 94.33%,45.44% 93.43%,43.99% 92.75%,42.53% 92.35%,41.02% 92.23%,39.44% 92.37%,37.75% 92.72%,35.96% 93.20%,34.10% 93.70%,32.18% 94.12%,30.25% 94.36%,28.37% 94.34%,26.61% 94.00%,25.00% 93.30%,23.59% 92.26%,22.41% 90.90%,21.46% 89.28%,20.71% 87.49%,20.11% 85.62%,19.61% 83.75%,19.13% 81.97%,18.59% 80.33%,17.92% 78.89%,17.06% 77.64%,15.98% 76.58%,14.67% 75.67%,13.16% 74.85%,11.48% 74.07%,9.73% 73.25%,7.99% 72.34%,6.36% 71.29%,4.93% 70.06%,3.80% 68.67%,3.02% 67.10%,2.61% 65.40%,2.58% 63.60%,2.89% 61.75%,3.46% 59.89%,4.21% 58.07%,5.02% 56.32%,5.80% 54.65%,6.44% 53.05%,6.85% 51.51%,7.00% 50.00%,6.85% 48.49%,6.44% 46.95%,5.80% 45.35%,5.02% 43.68%,4.21% 41.93%,3.46% 40.11%,2.89% 38.25%,2.58% 36.40%,2.61% 34.60%,3.02% 32.90%,3.80% 31.33%,4.93% 29.94%,6.36% 28.71%,7.99% 27.66%,9.73% 26.75%,11.48% 25.93%,13.16% 25.15%,14.67% 24.33%,15.98% 23.42%,17.06% 22.36%,17.92% 21.11%,18.59% 19.67%,19.13% 18.03%,19.61% 16.25%,20.11% 14.38%,20.71% 12.51%,21.46% 10.72%,22.41% 9.10%,23.59% 7.74%,25.00% 6.70%,26.61% 6.00%,28.37% 5.66%,30.25% 5.64%,32.18% 5.88%,34.10% 6.30%,35.96% 6.80%,37.75% 7.28%,39.44% 7.63%,41.02% 7.77%,42.53% 7.65%,43.99% 7.25%,45.44% 6.57%,46.90% 5.67%,48.41% 4.61%,50.00% 3.50%,51.66% 2.45%,53.39% 1.56%,55.16% 0.94%,56.93% 0.66%,58.68% 0.76%,60.36% 1.26%,61.93% 2.13%,63.38% 3.32%,64.70% 4.75%,65.90% 6.30%,67.01% 7.89%,68.08% 9.40%,69.14% 10.75%,70.27% 11.88%,71.50% 12.76%,72.88% 13.39%,74.42% 13.80%,76.12% 14.05%,77.96% 14.21%,79.89% 14.38%,81.84% 14.64%,83.73% 15.07%,85.49% 15.73%,87.03% 16.66%,88.30% 17.86%,89.27% 19.32%,89.91% 21.00%,90.26% 22.85%,90.35% 24.79%,90.27% 26.75%,90.10% 28.68%,89.94% 30.52%,89.89% 32.24%,90.03% 33.83%,90.41% 35.29%,91.06% 36.66%,91.98% 37.96%,93.12% 39.25%,94.43% 40.56%,95.79% 41.93%,97.12% 43.38%,98.29% 44.92%,99.21% 46.56%,99.80% 48.26%); flex-shrink:0; }
+  .feels b { display:block; font-size:34px; font-weight:700; font-variation-settings:'wdth' 120; line-height:1; }
+  .feels span { font-size:11px; font-weight:600; }
+  .mcard { background:var(--surf); color:var(--on); border-radius:28px; padding:16px; margin-bottom:8px; }
+  .lbl { font-size:12px; font-weight:600; color:var(--sub); letter-spacing:.02em; margin-bottom:10px; display:flex; gap:6px; align-items:center; }
+  .sum { font-size:15px; font-weight:500; margin-bottom:12px; font-variation-settings:'wdth' 105; }
+  .hours { display:flex; gap:6px; }
+  .h { flex:1; border-radius:999px; padding:10px 0; text-align:center; font-size:12px; background:var(--pc); color:var(--onpc); }
+  .h.now { background:var(--pri); color:var(--onpri); }
+  .h b { display:block; font-size:16px; font-weight:600; margin:4px 0 2px; }
+  .h i { display:block; font-style:normal; font-size:10px; height:12px; font-weight:600; }
+  .group { margin-bottom:8px; }
+  .gh { font-size:13px; font-weight:600; color:var(--hero); padding:10px 8px 8px; }
+  .row { display:grid; grid-template-columns:52px 34px 28px 1fr 28px; align-items:center; gap:8px; background:var(--surf); color:var(--on); padding:12px 16px; margin-bottom:2px; border-radius:6px; font-size:14px; }
+  .row:first-of-type { border-radius:24px 24px 6px 6px; }
+  .row:last-child { border-radius:6px 6px 24px 24px; margin-bottom:0; }
+  .row .d { font-weight:600; }
+  .row .lo { color:var(--sub); text-align:right; }
+  .row i { font-style:normal; font-size:10px; font-weight:600; color:var(--pri); display:block; line-height:1; }
+  .bar { position:relative; height:6px; border-radius:3px; background:var(--pc); }
+  .bar span { position:absolute; top:0; bottom:0; border-radius:3px; background:var(--pri); }
+  .tiles { display:grid; grid-template-columns:1fr 1fr; gap:8px; }
+  .tile { background:var(--surf); color:var(--on); border-radius:28px; padding:14px; min-height:132px; position:relative; overflow:hidden; }
+  .tile .big { font-size:30px; font-weight:600; font-variation-settings:'wdth' 115; line-height:1.05; }
+  .tile .sm { font-size:12px; color:var(--sub); margin-top:4px; line-height:1.35; }
+  .uv { width:64px; height:64px; display:grid; place-items:center; background:var(--pri); color:var(--onpri); clip-path:polygon(100.00% 50.00%,99.71% 51.74%,98.89% 53.42%,97.66% 55.01%,96.23% 56.50%,94.81% 57.90%,93.60% 59.27%,92.76% 60.66%,92.36% 62.15%,92.39% 63.77%,92.76% 65.56%,93.29% 67.49%,93.78% 69.49%,94.05% 71.48%,93.92% 73.35%,93.30% 75.00%,92.18% 76.36%,90.63% 77.40%,88.77% 78.17%,86.79% 78.74%,84.86% 79.25%,83.12% 79.83%,81.70% 80.61%,80.61% 81.70%,79.83% 83.12%,79.25% 84.86%,78.74% 86.79%,78.17% 88.77%,77.40% 90.63%,76.36% 92.18%,75.00% 93.30%,73.35% 93.92%,71.48% 94.05%,69.49% 93.78%,67.49% 93.29%,65.56% 92.76%,63.77% 92.39%,62.15% 92.36%,60.66% 92.76%,59.27% 93.60%,57.90% 94.81%,56.50% 96.23%,55.01% 97.66%,53.42% 98.89%,51.74% 99.71%,50.00% 100.00%,48.26% 99.71%,46.58% 98.89%,44.99% 97.66%,43.50% 96.23%,42.10% 94.81%,40.73% 93.60%,39.34% 92.76%,37.85% 92.36%,36.23% 92.39%,34.44% 92.76%,32.51% 93.29%,30.51% 93.78%,28.52% 94.05%,26.65% 93.92%,25.00% 93.30%,23.64% 92.18%,22.60% 90.63%,21.83% 88.77%,21.26% 86.79%,20.75% 84.86%,20.17% 83.12%,19.39% 81.70%,18.30% 80.61%,16.88% 79.83%,15.14% 79.25%,13.21% 78.74%,11.23% 78.17%,9.37% 77.40%,7.82% 76.36%,6.70% 75.00%,6.08% 73.35%,5.95% 71.48%,6.22% 69.49%,6.71% 67.49%,7.24% 65.56%,7.61% 63.77%,7.64% 62.15%,7.24% 60.66%,6.40% 59.27%,5.19% 57.90%,3.77% 56.50%,2.34% 55.01%,1.11% 53.42%,0.29% 51.74%,0.00% 50.00%,0.29% 48.26%,1.11% 46.58%,2.34% 44.99%,3.77% 43.50%,5.19% 42.10%,6.40% 40.73%,7.24% 39.34%,7.64% 37.85%,7.61% 36.23%,7.24% 34.44%,6.71% 32.51%,6.22% 30.51%,5.95% 28.52%,6.08% 26.65%,6.70% 25.00%,7.82% 23.64%,9.37% 22.60%,11.23% 21.83%,13.21% 21.26%,15.14% 20.75%,16.88% 20.17%,18.30% 19.39%,19.39% 18.30%,20.17% 16.88%,20.75% 15.14%,21.26% 13.21%,21.83% 11.23%,22.60% 9.37%,23.64% 7.82%,25.00% 6.70%,26.65% 6.08%,28.52% 5.95%,30.51% 6.22%,32.51% 6.71%,34.44% 7.24%,36.23% 7.61%,37.85% 7.64%,39.34% 7.24%,40.73% 6.40%,42.10% 5.19%,43.50% 3.77%,44.99% 2.34%,46.58% 1.11%,48.26% 0.29%,50.00% 0.00%,51.74% 0.29%,53.42% 1.11%,55.01% 2.34%,56.50% 3.77%,57.90% 5.19%,59.27% 6.40%,60.66% 7.24%,62.15% 7.64%,63.77% 7.61%,65.56% 7.24%,67.49% 6.71%,69.49% 6.22%,71.48% 5.95%,73.35% 6.08%,75.00% 6.70%,76.36% 7.82%,77.40% 9.37%,78.17% 11.23%,78.74% 13.21%,79.25% 15.14%,79.83% 16.88%,80.61% 18.30%,81.70% 19.39%,83.12% 20.17%,84.86% 20.75%,86.79% 21.26%,88.77% 21.83%,90.63% 22.60%,92.18% 23.64%,93.30% 25.00%,93.92% 26.65%,94.05% 28.52%,93.78% 30.51%,93.29% 32.51%,92.76% 34.44%,92.39% 36.23%,92.36% 37.85%,92.76% 39.34%,93.60% 40.73%,94.81% 42.10%,96.23% 43.50%,97.66% 44.99%,98.89% 46.58%,99.71% 48.26%); font-size:26px; font-weight:700; margin:2px 0 6px; }
+  .aq { width:60px; height:60px; display:grid; place-items:center; background:#f2b8b5; color:#601410; clip-path:polygon(100.00% 50.00%,99.91% 51.74%,99.65% 53.47%,99.21% 55.17%,98.61% 56.83%,97.86% 58.44%,96.97% 59.98%,95.95% 61.46%,94.82% 62.85%,93.61% 64.17%,92.33% 65.41%,90.99% 66.56%,89.62% 67.64%,88.24% 68.65%,86.87% 69.60%,85.51% 70.50%,84.18% 71.36%,82.90% 72.19%,81.67% 73.01%,80.50% 73.83%,79.39% 74.66%,78.34% 75.51%,77.35% 76.41%,76.41% 77.35%,75.51% 78.34%,74.66% 79.39%,73.83% 80.50%,73.01% 81.67%,72.19% 82.90%,71.36% 84.18%,70.50% 85.51%,69.60% 86.87%,68.65% 88.24%,67.64% 89.62%,66.56% 90.99%,65.41% 92.33%,64.17% 93.61%,62.85% 94.82%,61.46% 95.95%,59.98% 96.97%,58.44% 97.86%,56.83% 98.61%,55.17% 99.21%,53.47% 99.65%,51.74% 99.91%,50.00% 100.00%,48.26% 99.91%,46.53% 99.65%,44.83% 99.21%,43.17% 98.61%,41.56% 97.86%,40.02% 96.97%,38.54% 95.95%,37.15% 94.82%,35.83% 93.61%,34.59% 92.33%,33.44% 90.99%,32.36% 89.62%,31.35% 88.24%,30.40% 86.87%,29.50% 85.51%,28.64% 84.18%,27.81% 82.90%,26.99% 81.67%,26.17% 80.50%,25.34% 79.39%,24.49% 78.34%,23.59% 77.35%,22.65% 76.41%,21.66% 75.51%,20.61% 74.66%,19.50% 73.83%,18.33% 73.01%,17.10% 72.19%,15.82% 71.36%,14.49% 70.50%,13.13% 69.60%,11.76% 68.65%,10.38% 67.64%,9.01% 66.56%,7.67% 65.41%,6.39% 64.17%,5.18% 62.85%,4.05% 61.46%,3.03% 59.98%,2.14% 58.44%,1.39% 56.83%,0.79% 55.17%,0.35% 53.47%,0.09% 51.74%,0.00% 50.00%,0.09% 48.26%,0.35% 46.53%,0.79% 44.83%,1.39% 43.17%,2.14% 41.56%,3.03% 40.02%,4.05% 38.54%,5.18% 37.15%,6.39% 35.83%,7.67% 34.59%,9.01% 33.44%,10.38% 32.36%,11.76% 31.35%,13.13% 30.40%,14.49% 29.50%,15.82% 28.64%,17.10% 27.81%,18.33% 26.99%,19.50% 26.17%,20.61% 25.34%,21.66% 24.49%,22.65% 23.59%,23.59% 22.65%,24.49% 21.66%,25.34% 20.61%,26.17% 19.50%,26.99% 18.33%,27.81% 17.10%,28.64% 15.82%,29.50% 14.49%,30.40% 13.13%,31.35% 11.76%,32.36% 10.38%,33.44% 9.01%,34.59% 7.67%,35.83% 6.39%,37.15% 5.18%,38.54% 4.05%,40.02% 3.03%,41.56% 2.14%,43.17% 1.39%,44.83% 0.79%,46.53% 0.35%,48.26% 0.09%,50.00% 0.00%,51.74% 0.09%,53.47% 0.35%,55.17% 0.79%,56.83% 1.39%,58.44% 2.14%,59.98% 3.03%,61.46% 4.05%,62.85% 5.18%,64.17% 6.39%,65.41% 7.67%,66.56% 9.01%,67.64% 10.38%,68.65% 11.76%,69.60% 13.13%,70.50% 14.49%,71.36% 15.82%,72.19% 17.10%,73.01% 18.33%,73.83% 19.50%,74.66% 20.61%,75.51% 21.66%,76.41% 22.65%,77.35% 23.59%,78.34% 24.49%,79.39% 25.34%,80.50% 26.17%,81.67% 26.99%,82.90% 27.81%,84.18% 28.64%,85.51% 29.50%,86.87% 30.40%,88.24% 31.35%,89.62% 32.36%,90.99% 33.44%,92.33% 34.59%,93.61% 35.83%,94.82% 37.15%,95.95% 38.54%,96.97% 40.02%,97.86% 41.56%,98.61% 43.17%,99.21% 44.83%,99.65% 46.53%,99.91% 48.26%); font-size:20px; font-weight:700; margin:2px 0 6px; }
+  .wind { width:58px; height:58px; border-radius:50%; border:3px solid var(--pc); position:relative; display:grid; place-items:center; font-size:18px; color:var(--pri); margin:2px 0 6px; }
+  .hum { position:absolute; left:0; right:0; bottom:0; height:72%; background:var(--pc); opacity:.7; border-radius:16px 16px 0 0; z-index:0; }
+  .tile > *:not(.hum) { position:relative; z-index:1; }
+  .arc { width:120px; height:44px; margin:6px 0 2px; }
+  /* scene layers */
+  .sun { position:absolute; z-index:1; width:200px; height:200px; border-radius:50%; top:-60px; right:-60px; opacity:.7;
+         background:radial-gradient(circle,#fffbe0 0%,rgba(255,236,150,.8) 30%,rgba(255,220,120,0) 70%); animation:pulse 4s ease-in-out infinite; }
+  @keyframes pulse { 50% { transform:scale(1.1); opacity:.55; } }
+  .cl { position:absolute; z-index:1; height:44px; border-radius:44px; filter:blur(2px); background:rgba(255,255,255,.7); animation:drift 18s linear infinite alternate; }
+  .cl::before { content:""; position:absolute; width:55%; height:140%; left:18%; top:-60%; border-radius:50%; background:inherit; }
+  .cl.n { background:rgba(150,160,185,.3); }
+  @keyframes drift { from { transform:translateX(-25px); } to { transform:translateX(30px); } }
+  .rain { position:absolute; inset:-40px 0 0 0; z-index:1; opacity:.5;
+          background-image:repeating-linear-gradient(105deg,rgba(255,255,255,0) 0 9px,rgba(255,255,255,.35) 9px 10px,rgba(255,255,255,0) 10px 22px);
+          animation:fall .55s linear infinite; }
+  @keyframes fall { to { transform:translateY(40px); } }
+  .cap { text-align:center; font-size:13px; margin-top:10px; }
+  /* widgets */
+  .wall { margin-top:28px; padding:28px; border-radius:28px; background:linear-gradient(135deg,#5b6b4e,#2e3a2a); display:flex; gap:28px; flex-wrap:wrap; justify-content:center; }
+  .w { font-family:'Roboto Flex',system-ui,sans-serif; border-radius:28px; padding:16px; overflow:hidden; position:relative; }
+  .w2 { width:150px; height:150px; }
+  .w4 { width:320px; height:150px; display:flex; justify-content:space-between; }
+  .w .t { font-size:54px; font-weight:400; font-variation-settings:'wdth' 125; line-height:1; letter-spacing:-2px; }
+  .wcap { text-align:center; color:#e8eadf; font-size:12px; margin-top:8px; }
+  .dyn { background:#dfe8cf; color:#1a2614; }
+  .dyn .pill { background:#3e6a2c; color:#fff; }
+  .pill { display:inline-block; border-radius:999px; padding:4px 10px; font-size:12px; font-weight:600; margin-top:8px; }
+</style>
+
+<h2>Android 16 look (Material 3 Expressive)</h2>
+<p class="subtitle">The content is the same as the iPhone-style screen, restyled the way Android 16 apps look: bold, wide Roboto Flex numbers, solid rounded cards instead of frosted glass, playful shapes (the "feels like" cookie, the UV sun), pill-shaped hourly items, and the grouped list from Android 16 Settings for the 10-day forecast. The background still comes from the weather and the time of day.</p>
+
+<div class="wrap">
+  <!-- DAY -->
+  <div>
+    <div class="phone"><div class="scr day">
+      <div class="sun"></div>
+      <div class="cl" style="width:110px;top:300px;left:200px"></div>
+      <div class="cl" style="width:80px;top:70px;left:200px;animation-duration:24s"></div>
+      <div class="z">
+        <div class="sbar"><span>12:41</span><span>📶 🔋 78%</span></div>
+        <div class="top"><div class="chip">📍 Kebayoran Baru</div><div style="display:flex;gap:8px"><div class="ib">↻</div><div class="ib">⚙</div></div></div>
+        <div class="hero">
+          <div><div class="temp">33°</div><div class="cond">Partly cloudy</div><div class="hl">High 34° · Low 25°</div></div>
+          <div class="feels"><div><span>Feels like</span><b>39°</b></div></div>
+        </div>
+
+        <div class="mcard">
+          <div class="sum">Rain likely from around 16:00. Very hot until then.</div>
+          <div class="hours">
+            <div class="h now">Now<b>33°</b>⛅<i></i></div>
+            <div class="h">13<b>34°</b>☀️<i></i></div>
+            <div class="h">14<b>34°</b>⛅<i></i></div>
+            <div class="h">15<b>33°</b>⛅<i>20%</i></div>
+            <div class="h">16<b>31°</b>🌦️<i>60%</i></div>
+            <div class="h">17<b>28°</b>🌧️<i>80%</i></div>
+          </div>
+        </div>
+
+        <div class="group">
+          <div class="gh">10-day forecast</div>
+          <div class="row"><span class="d">Today</span><span>⛅<i>40%</i></span><span class="lo">25°</span><div class="bar"><span style="left:9%;right:9%"></span></div><span>34°</span></div>
+          <div class="row"><span class="d">Mon</span><span>🌧️<i>70%</i></span><span class="lo">25°</span><div class="bar"><span style="left:9%;right:18%"></span></div><span>33°</span></div>
+          <div class="row"><span class="d">Tue</span><span>⛈️<i>80%</i></span><span class="lo">24°</span><div class="bar"><span style="left:0;right:27%"></span></div><span>32°</span></div>
+          <div class="row"><span class="d">Wed</span><span>⛅</span><span class="lo">25°</span><div class="bar"><span style="left:9%;right:9%"></span></div><span>34°</span></div>
+          <div class="row"><span class="d">Thu</span><span>☀️</span><span class="lo">26°</span><div class="bar"><span style="left:18%;right:0"></span></div><span>35°</span></div>
+        </div>
+
+        <div class="gh">Details</div>
+        <div class="tiles">
+          <div class="tile"><div class="lbl">☀️ UV index</div><div class="uv">11</div><div class="sm">Extreme. Avoid midday sun.</div></div>
+          <div class="tile"><div class="lbl">😷 Air quality</div><div class="aq">156</div><div class="sm">Unhealthy. Mask outdoors.</div></div>
+          <div class="tile"><div class="hum"></div><div class="lbl">💧 Humidity</div><div class="big">72%</div><div class="sm">Dew point 27°</div></div>
+          <div class="tile"><div class="lbl">💨 Wind</div><div class="wind">↘</div><div class="sm">12 km/h from NW</div></div>
+          <div class="tile"><div class="lbl">🌧️ Rainfall</div><div class="big">0 mm</div><div class="sm">Last 24 h. 14 mm expected tomorrow.</div></div>
+          <div class="tile"><div class="lbl">🌅 Sunset</div>
+            <svg class="arc" viewBox="0 0 120 44"><path d="M4 42 Q60 -18 116 42" fill="none" stroke="var(--pc)" stroke-width="4" stroke-linecap="round"/><path d="M4 42 Q40 -6 88 14" fill="none" stroke="var(--pri)" stroke-width="4" stroke-linecap="round"/><circle cx="88" cy="14" r="6" fill="var(--pri)"/></svg>
+            <div class="big" style="font-size:24px">17:49</div><div class="sm">Sunrise 05:31</div></div>
+        </div>
+      </div>
+    </div></div>
+    <div class="cap"><b>Day, partly cloudy</b></div>
+  </div>
+
+  <!-- NIGHT -->
+  <div>
+    <div class="phone"><div class="scr night">
+      <div class="cl n" style="width:120px;top:40px;left:10px"></div>
+      <div class="rain"></div>
+      <div class="z">
+        <div class="sbar"><span>21:15</span><span>📶 🔋 41%</span></div>
+        <div class="top"><div class="chip">📍 Kebayoran Baru</div><div style="display:flex;gap:8px"><div class="ib">↻</div><div class="ib">⚙</div></div></div>
+        <div class="hero">
+          <div><div class="temp">26°</div><div class="cond">Rain</div><div class="hl">High 34° · Low 25°</div></div>
+          <div class="feels"><div><span>Feels like</span><b>29°</b></div></div>
+        </div>
+        <div class="mcard">
+          <div class="sum">Rain easing after 23:00.</div>
+          <div class="hours">
+            <div class="h now">Now<b>26°</b>🌧️<i>90%</i></div>
+            <div class="h">22<b>26°</b>🌧️<i>70%</i></div>
+            <div class="h">23<b>25°</b>🌦️<i>40%</i></div>
+            <div class="h">00<b>25°</b>☁️<i></i></div>
+            <div class="h">01<b>25°</b>☁️<i></i></div>
+            <div class="h">02<b>25°</b>🌙<i></i></div>
+          </div>
+        </div>
+        <div class="group">
+          <div class="gh">10-day forecast</div>
+          <div class="row"><span class="d">Today</span><span>🌧️<i>90%</i></span><span class="lo">25°</span><div class="bar"><span style="left:9%;right:9%"></span></div><span>34°</span></div>
+          <div class="row"><span class="d">Mon</span><span>🌧️<i>70%</i></span><span class="lo">25°</span><div class="bar"><span style="left:9%;right:18%"></span></div><span>33°</span></div>
+          <div class="row"><span class="d">Tue</span><span>⛈️<i>80%</i></span><span class="lo">24°</span><div class="bar"><span style="left:0;right:27%"></span></div><span>32°</span></div>
+        </div>
+        <div class="tiles">
+          <div class="tile"><div class="lbl">☀️ UV index</div><div class="uv">0</div><div class="sm">None at night.</div></div>
+          <div class="tile"><div class="hum" style="height:92%"></div><div class="lbl">💧 Humidity</div><div class="big">92%</div><div class="sm">Dew point 25°</div></div>
+        </div>
+      </div>
+    </div></div>
+    <div class="cap"><b>Night, rain</b> (top half only)</div>
+  </div>
+</div>
+
+<h3 style="margin-top:30px">Widget: which colours?</h3>
+<p class="subtitle">Android 16 widgets usually take their colours from your wallpaper. Ours could do that, or use the same weather background as the app.</p>
+<div class="wall">
+  <div>
+    <div class="w w2 day" style="color:#fff"><div class="cl" style="width:60px;top:18px;left:95px;animation:none;opacity:.6"></div><div class="z">
+      <div style="font-size:12px;font-weight:600">Kebayoran Baru</div><div class="t" style="margin-top:10px">33°</div><div style="font-size:13px;margin-top:4px">Feels 39° · ⛅</div></div></div>
+    <div class="wcap">A. Weather background</div>
+  </div>
+  <div>
+    <div class="w w2 dyn">
+      <div style="font-size:12px;font-weight:600">Kebayoran Baru</div><div class="t" style="margin-top:10px">33°</div><span class="pill">Feels 39° ⛅</span></div>
+    <div class="wcap">B. Wallpaper colours</div>
+  </div>
+  <div>
+    <div class="w w4 day" style="color:#fff"><div class="cl" style="width:70px;top:16px;left:120px;animation:none;opacity:.5"></div>
+      <div class="z" style="display:flex;flex-direction:column;justify-content:space-between">
+        <div><div class="t" style="font-size:46px;font-weight:500">12:41</div><div style="font-size:13px;font-weight:600;margin-top:4px">Sunday, 1 November</div></div>
+        <div style="font-size:12px;opacity:.95">📍 Kebayoran Baru · ⛅ Partly cloudy</div>
+      </div>
+      <div class="z" style="display:flex;align-items:center;gap:8px">
+        <div style="text-align:right"><div class="t" style="font-size:44px">33°</div><div style="font-size:11px;margin-top:2px">H34° L25°</div></div>
+        <div style="display:grid;place-items:center;width:78px;height:78px;background:#1f5fae;color:#fff;clip-path:polygon(100.00% 50.00%,99.80% 51.74%,99.21% 53.44%,98.29% 55.08%,97.12% 56.62%,95.79% 58.07%,94.43% 59.44%,93.12% 60.75%,91.98% 62.04%,91.06% 63.34%,90.41% 64.71%,90.03% 66.17%,89.89% 67.76%,89.94% 69.48%,90.10% 71.32%,90.27% 73.25%,90.35% 75.21%,90.26% 77.15%,89.91% 79.00%,89.27% 80.68%,88.30% 82.14%,87.03% 83.34%,85.49% 84.27%,83.73% 84.93%,81.84% 85.36%,79.89% 85.62%,77.96% 85.79%,76.12% 85.95%,74.42% 86.20%,72.88% 86.61%,71.50% 87.24%,70.27% 88.12%,69.14% 89.25%,68.08% 90.60%,67.01% 92.11%,65.90% 93.70%,64.70% 95.25%,63.38% 96.68%,61.93% 97.87%,60.36% 98.74%,58.68% 99.24%,56.93% 99.34%,55.16% 99.06%,53.39% 98.44%,51.66% 97.55%,50.00% 96.50%,48.41% 95.39%,46.90% 94.33%,45.44% 93.43%,43.99% 92.75%,42.53% 92.35%,41.02% 92.23%,39.44% 92.37%,37.75% 92.72%,35.96% 93.20%,34.10% 93.70%,32.18% 94.12%,30.25% 94.36%,28.37% 94.34%,26.61% 94.00%,25.00% 93.30%,23.59% 92.26%,22.41% 90.90%,21.46% 89.28%,20.71% 87.49%,20.11% 85.62%,19.61% 83.75%,19.13% 81.97%,18.59% 80.33%,17.92% 78.89%,17.06% 77.64%,15.98% 76.58%,14.67% 75.67%,13.16% 74.85%,11.48% 74.07%,9.73% 73.25%,7.99% 72.34%,6.36% 71.29%,4.93% 70.06%,3.80% 68.67%,3.02% 67.10%,2.61% 65.40%,2.58% 63.60%,2.89% 61.75%,3.46% 59.89%,4.21% 58.07%,5.02% 56.32%,5.80% 54.65%,6.44% 53.05%,6.85% 51.51%,7.00% 50.00%,6.85% 48.49%,6.44% 46.95%,5.80% 45.35%,5.02% 43.68%,4.21% 41.93%,3.46% 40.11%,2.89% 38.25%,2.58% 36.40%,2.61% 34.60%,3.02% 32.90%,3.80% 31.33%,4.93% 29.94%,6.36% 28.71%,7.99% 27.66%,9.73% 26.75%,11.48% 25.93%,13.16% 25.15%,14.67% 24.33%,15.98% 23.42%,17.06% 22.36%,17.92% 21.11%,18.59% 19.67%,19.13% 18.03%,19.61% 16.25%,20.11% 14.38%,20.71% 12.51%,21.46% 10.72%,22.41% 9.10%,23.59% 7.74%,25.00% 6.70%,26.61% 6.00%,28.37% 5.66%,30.25% 5.64%,32.18% 5.88%,34.10% 6.30%,35.96% 6.80%,37.75% 7.28%,39.44% 7.63%,41.02% 7.77%,42.53% 7.65%,43.99% 7.25%,45.44% 6.57%,46.90% 5.67%,48.41% 4.61%,50.00% 3.50%,51.66% 2.45%,53.39% 1.56%,55.16% 0.94%,56.93% 0.66%,58.68% 0.76%,60.36% 1.26%,61.93% 2.13%,63.38% 3.32%,64.70% 4.75%,65.90% 6.30%,67.01% 7.89%,68.08% 9.40%,69.14% 10.75%,70.27% 11.88%,71.50% 12.76%,72.88% 13.39%,74.42% 13.80%,76.12% 14.05%,77.96% 14.21%,79.89% 14.38%,81.84% 14.64%,83.73% 15.07%,85.49% 15.73%,87.03% 16.66%,88.30% 17.86%,89.27% 19.32%,89.91% 21.00%,90.26% 22.85%,90.35% 24.79%,90.27% 26.75%,90.10% 28.68%,89.94% 30.52%,89.89% 32.24%,90.03% 33.83%,90.41% 35.29%,91.06% 36.66%,91.98% 37.96%,93.12% 39.25%,94.43% 40.56%,95.79% 41.93%,97.12% 43.38%,98.29% 44.92%,99.21% 46.56%,99.80% 48.26%);text-align:center"><div><div style="font-size:9px;font-weight:600">Feels like</div><div style="font-size:24px;font-weight:700">39°</div></div></div>
+      </div>
+    </div>
+    <div class="wcap">Large (4×2): time, date and weather</div>
+  </div>
+</div>
