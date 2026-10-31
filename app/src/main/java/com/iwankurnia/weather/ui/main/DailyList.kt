@@ -36,6 +36,7 @@ import androidx.compose.ui.unit.dp
 import com.iwankurnia.weather.model.DayForecast
 import com.iwankurnia.weather.model.SampleData
 import com.iwankurnia.weather.ui.background.CardColours
+import com.iwankurnia.weather.ui.background.cardTint
 import com.iwankurnia.weather.ui.icons.conditionLabel
 import com.iwankurnia.weather.ui.icons.weatherIconRes
 import com.iwankurnia.weather.ui.theme.WeatherText

@@ -5,6 +5,8 @@ import com.iwankurnia.weather.data.source.BmkgStep
 import com.iwankurnia.weather.data.source.OmDay
 import com.iwankurnia.weather.data.source.OmHour
 import com.iwankurnia.weather.data.source.OpenMeteoForecast
+import com.iwankurnia.weather.data.source.bmkgCondition
+import com.iwankurnia.weather.data.source.wmoCondition
 import com.iwankurnia.weather.model.AirQuality
 import com.iwankurnia.weather.model.Condition
 import com.iwankurnia.weather.model.DataSource
@@ -107,7 +109,7 @@ object SnapshotMerger {
                 date = it.date,
                 lowC = it.lowC,
                 highC = it.highC,
-                condition = wmoToCondition(it.weatherCode, null, raining = false),
+                condition = wmoCondition(it.weatherCode, null, raining = false),
                 rainChancePct = it.rainChancePct,
                 source = DataSource.OPEN_METEO,
             )
@@ -147,7 +149,7 @@ object SnapshotMerger {
             temperatureC = temperature,
             feelsLikeC = feelsLikeC(temperature, humidity),
             humidityPct = humidity,
-            condition = bmkgToCondition(nearest.weatherCode),
+            condition = bmkgCondition(nearest.weatherCode),
             windKmh = nearest.windKmh,
             windFromDeg = nearest.windFromDeg,
             isDay = ctx.isDay(now),
@@ -159,7 +161,7 @@ object SnapshotMerger {
             ForecastStep(
                 time = it.local,
                 temperatureC = it.temperatureC,
-                condition = bmkgToCondition(it.weatherCode),
+                condition = bmkgCondition(it.weatherCode),
                 isDay = ctx.isDay(it.local),
                 rainChancePct = ctx.rainChanceAt(it.local),
             )
@@ -193,7 +195,7 @@ object SnapshotMerger {
             date = date,
             lowC = steps.minOf { it.temperatureC },
             highC = steps.maxOf { it.temperatureC },
-            condition = daytime.map { bmkgToCondition(it.weatherCode) }.maxBy { SEVERITY.indexOf(it) },
+            condition = daytime.map { bmkgCondition(it.weatherCode) }.maxBy { SEVERITY.indexOf(it) },
             rainChancePct = ctx.omDays[date]?.rainChancePct,
             source = DataSource.BMKG,
         )
@@ -273,32 +275,5 @@ object SnapshotMerger {
         if (b == null) a else a + (b - a) * fraction
 
     private fun OmHour.condition(): Condition =
-        wmoToCondition(weatherCode, visibilityM, raining = precipitationMm > 0.0)
-}
-
-/** BMKG weather code to condition; unknown codes are Cloudy. Duplicates Task 2's table until integration. */
-internal fun bmkgToCondition(code: Int): Condition = when (code) {
-    0 -> Condition.CLEAR
-    1, 2 -> Condition.PARTLY_CLOUDY
-    3, 4 -> Condition.CLOUDY
-    5, 10, 45 -> Condition.HAZE
-    60, 61, 63, 80 -> Condition.RAIN
-    95, 97 -> Condition.THUNDERSTORM
-    else -> Condition.CLOUDY
-}
-
-/**
- * WMO weather code to condition (Open-Meteo fallback). No rain with visibility under 5 km is Haze;
- * other unknown codes are Cloudy. Duplicates Task 2's table until integration.
- */
-internal fun wmoToCondition(code: Int, visibilityM: Double?, raining: Boolean): Condition = when (code) {
-    in 95..99 -> Condition.THUNDERSTORM
-    in 51..67, in 80..82 -> Condition.RAIN
-    45, 48 -> Condition.HAZE
-    else -> when {
-        !raining && visibilityM != null && visibilityM < 5_000.0 -> Condition.HAZE
-        code == 0 -> Condition.CLEAR
-        code == 1 || code == 2 -> Condition.PARTLY_CLOUDY
-        else -> Condition.CLOUDY
-    }
+        wmoCondition(weatherCode, visibilityM, raining = precipitationMm > 0.0)
 }

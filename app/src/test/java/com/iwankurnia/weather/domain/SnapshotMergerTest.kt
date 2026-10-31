@@ -278,37 +278,4 @@ class SnapshotMergerTest {
 
         assertNull(SnapshotMerger.merge(place, bmkg(), om(), null, at1130, fetchedAt).air)
     }
-
-    @Test
-    fun conditionCodes_bmkgTable() {
-        val table = mapOf(
-            Condition.CLEAR to listOf(0),
-            Condition.PARTLY_CLOUDY to listOf(1, 2),
-            Condition.CLOUDY to listOf(3, 4, 999),
-            Condition.HAZE to listOf(5, 10, 45),
-            Condition.RAIN to listOf(60, 61, 63, 80),
-            Condition.THUNDERSTORM to listOf(95, 97),
-        )
-        table.forEach { (condition, codes) ->
-            codes.forEach { assertEquals("code $it", condition, bmkgToCondition(it)) }
-        }
-    }
-
-    @Test
-    fun conditionCodes_wmoTable() {
-        val table = mapOf(
-            Condition.CLEAR to listOf(0),
-            Condition.PARTLY_CLOUDY to listOf(1, 2),
-            Condition.CLOUDY to listOf(3, 71, 999),
-            Condition.HAZE to listOf(45, 48),
-            Condition.RAIN to (51..67) + (80..82),
-            Condition.THUNDERSTORM to (95..99).toList(),
-        )
-        table.forEach { (condition, codes) ->
-            codes.forEach { assertEquals("code $it", condition, wmoToCondition(it, 20_000.0, raining = false)) }
-        }
-        assertEquals(Condition.HAZE, wmoToCondition(3, 4000.0, raining = false))
-        assertEquals(Condition.CLOUDY, wmoToCondition(3, 4000.0, raining = true))
-        assertEquals(Condition.CLOUDY, wmoToCondition(3, null, raining = false))
-    }
 }

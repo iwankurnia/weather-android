@@ -51,6 +51,7 @@ import com.iwankurnia.weather.model.AirQuality
 import com.iwankurnia.weather.model.SampleData
 import com.iwankurnia.weather.model.WeatherSnapshot
 import com.iwankurnia.weather.ui.background.CardColours
+import com.iwankurnia.weather.ui.background.cardTint
 import com.iwankurnia.weather.ui.theme.WeatherShapes
 import com.iwankurnia.weather.ui.theme.WeatherText
 import com.iwankurnia.weather.ui.theme.WeatherTheme
