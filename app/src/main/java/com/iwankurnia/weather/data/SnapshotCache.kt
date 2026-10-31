@@ -45,10 +45,17 @@ class SnapshotCache(
 
     suspend fun bmkg(): CachedBmkg? = read { it.bmkg?.toModel() }
 
-    /** Replaces both entries. Pass `bmkg = null` when this fetch used no BMKG data. */
-    suspend fun save(snapshot: WeatherSnapshot, bmkg: CachedBmkg?) = withContext(io) {
+    /** When BMKG last failed or came back empty, or null after a success. */
+    suspend fun bmkgFailedAt(): Instant? = read { it.bmkgFailedAt?.let(Instant::parse) }
+
+    /**
+     * Replaces every entry. Pass `bmkg = null` when there is no BMKG forecast worth keeping, and
+     * [bmkgFailedAt] while BMKG is failing.
+     */
+    suspend fun save(snapshot: WeatherSnapshot, bmkg: CachedBmkg?, bmkgFailedAt: Instant? = null) = withContext(io) {
         mutex.withLock {
-            val text = json.encodeToString(CacheFile.serializer(), CacheFile(VERSION, snapshot.toDto(), bmkg?.toDto()))
+            val cacheFile = CacheFile(VERSION, snapshot.toDto(), bmkg?.toDto(), bmkgFailedAt?.toString())
+            val text = json.encodeToString(CacheFile.serializer(), cacheFile)
             file.parentFile?.mkdirs()
             val temp = File(file.path + ".tmp")
             temp.writeText(text)
@@ -86,8 +93,14 @@ class SnapshotCache(
 
 // --- @Serializable mirrors of the model, so the model itself stays free of serialisation ---
 
+/** [bmkgFailedAt] was added later; it defaults to null so older files still load as version 1. */
 @Serializable
-private data class CacheFile(val version: Int, val snapshot: SnapshotDto? = null, val bmkg: CachedBmkgDto? = null)
+private data class CacheFile(
+    val version: Int,
+    val snapshot: SnapshotDto? = null,
+    val bmkg: CachedBmkgDto? = null,
+    val bmkgFailedAt: String? = null,
+)
 
 @Serializable
 private data class SnapshotDto(

@@ -51,6 +51,33 @@ class OpenMeteoParserTest {
     }
 
     @Test
+    fun openMeteo_nullRainChance_keepsRows() {
+        val json = """
+            {"hourly":{"time":["2026-11-01T00:00","2026-11-01T01:00"],
+              "temperature_2m":[27.0,26.5],"apparent_temperature":[30.0,29.5],
+              "relative_humidity_2m":[80,82],"weather_code":[2,3],
+              "precipitation_probability":[null,40],"precipitation":[0.0,0.1],
+              "visibility":[20000,null],"uv_index":[0.0,0.0],"dew_point_2m":[23.0,23.1],
+              "wind_speed_10m":[5.0,6.0],"wind_direction_10m":[90,100],"wind_gusts_10m":[10.0,11.0],
+              "is_day":[0,0]},
+             "daily":{"time":["2026-11-01","2026-11-02"],
+              "temperature_2m_min":[25.0,25.5],"temperature_2m_max":[33.0,32.5],
+              "weather_code":[80,3],"precipitation_probability_max":[null,20],
+              "sunrise":["2026-11-01T05:26","2026-11-02T05:26"],
+              "sunset":["2026-11-01T17:46","2026-11-02T17:46"]}}
+        """
+
+        val forecast = OpenMeteoParser.parse(json, null)
+
+        assertEquals(2, forecast.hours.size)
+        assertNull(forecast.hours[0].rainChancePct)
+        assertEquals(40, forecast.hours[1].rainChancePct)
+        assertEquals(2, forecast.days.size)
+        assertNull(forecast.days[0].rainChancePct)
+        assertEquals(20, forecast.days[1].rainChancePct)
+    }
+
+    @Test
     fun openMeteo_missingOrBadAir_givesNullAqi() {
         assertNull(OpenMeteoParser.parse(forecastJson, null).modelledUsAqi)
         assertNull(OpenMeteoParser.parse(forecastJson, "{\"error\":true,\"reason\":\"x\"}").modelledUsAqi)

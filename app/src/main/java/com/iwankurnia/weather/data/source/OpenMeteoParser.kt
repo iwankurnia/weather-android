@@ -15,7 +15,8 @@ object OpenMeteoParser {
      * Parses [forecastJson] (throws when it is not a forecast) and, if given, [airJson].
      *
      * Air quality is optional: a missing or unreadable [airJson] only leaves `modelledUsAqi` null.
-     * Hours and days missing a required value are skipped. Only visibility may be absent.
+     * Hours and days missing a required value are skipped. Only visibility and the chance of rain
+     * may be absent.
      */
     fun parse(forecastJson: String, airJson: String?): OpenMeteoForecast {
         val dto = sourceJson.decodeFromString<ForecastDto>(forecastJson)
@@ -33,7 +34,7 @@ object OpenMeteoParser {
             apparentC = h.apparent.at(i) ?: return@mapNotNull null,
             humidityPct = h.humidity.at(i)?.roundToInt() ?: return@mapNotNull null,
             weatherCode = h.weatherCode.at(i)?.roundToInt() ?: return@mapNotNull null,
-            rainChancePct = h.rainChance.at(i)?.roundToInt() ?: return@mapNotNull null,
+            rainChancePct = h.rainChance.at(i)?.roundToInt(),
             precipitationMm = h.precipitation.at(i) ?: return@mapNotNull null,
             visibilityM = h.visibility.at(i),
             uvIndex = h.uvIndex.at(i) ?: return@mapNotNull null,
@@ -51,7 +52,7 @@ object OpenMeteoParser {
             lowC = d.min.at(i) ?: return@mapNotNull null,
             highC = d.max.at(i) ?: return@mapNotNull null,
             weatherCode = d.weatherCode.at(i)?.roundToInt() ?: return@mapNotNull null,
-            rainChancePct = d.rainChance.at(i)?.roundToInt() ?: return@mapNotNull null,
+            rainChancePct = d.rainChance.at(i)?.roundToInt(),
             sunrise = d.sunrise.timeAt(i) ?: return@mapNotNull null,
             sunset = d.sunset.timeAt(i) ?: return@mapNotNull null,
         )

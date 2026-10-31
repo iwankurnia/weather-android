@@ -120,7 +120,23 @@ class SnapshotMergerTest {
         assertEquals(Condition.CLOUDY, s.steps[1].condition)
         s.steps.forEach { assertEquals(it.time.hour * 2, it.rainChancePct) }
 
-        assertEquals("Rain likely from around 10:00.", s.summary)
+        // The 10:00 rain step is still current at 11:30.
+        assertEquals("Rain likely now.", s.summary)
+    }
+
+    @Test
+    fun merge_missingRainChance_staysNull() {
+        val weather = om { it.copy(rainChancePct = null) }.let { f ->
+            f.copy(days = f.days.map { it.copy(rainChancePct = null) })
+        }
+        for (forecast in listOf(bmkg(), null)) {
+            val s = SnapshotMerger.merge(place, forecast, weather, null, at1130, fetchedAt)
+
+            assertEquals(8, s.steps.size)
+            assertTrue(s.steps.all { it.rainChancePct == null })
+            assertEquals(10, s.days.size)
+            assertTrue(s.days.all { it.rainChancePct == null })
+        }
     }
 
     @Test
@@ -226,7 +242,7 @@ class SnapshotMergerTest {
             assertTrue(s.days.all { it.source == DataSource.OPEN_METEO })
             assertEquals(21.0, s.todayLowC, 1e-9)
             assertEquals(31.0, s.todayHighC, 1e-9)
-            assertEquals("Rain likely from around 11:00.", s.summary)
+            assertEquals("Rain likely now.", s.summary)
         }
     }
 
