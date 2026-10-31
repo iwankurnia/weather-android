@@ -28,6 +28,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.CloudOff
+import androidx.compose.material.icons.rounded.LocationDisabled
 import androidx.compose.material.icons.rounded.LocationOff
 import androidx.compose.material.icons.rounded.LocationSearching
 import androidx.compose.material.icons.rounded.SyncProblem
@@ -111,6 +112,28 @@ fun LocationDeniedScreen(onOpenSettings: () -> Unit, onTryAgain: () -> Unit, mod
     }
 }
 
+/** Location is allowed but the phone can't give a fix, usually because location is turned off. */
+@Composable
+fun LocationUnavailableScreen(
+    onOpenLocationSettings: () -> Unit,
+    onTryAgain: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    PlainScreen(
+        modifier = modifier,
+        badge = { EmptyBadge(Icons.Rounded.LocationDisabled) },
+        title = "Can’t find your location",
+        text = "Turn on location on your phone, then try again.",
+    ) {
+        Button(onClick = onOpenLocationSettings, modifier = Modifier.fillMaxWidth(), contentPadding = ButtonPadding) {
+            Text("Turn on location", style = WeatherText.button)
+        }
+        FilledTonalButton(onClick = onTryAgain, modifier = Modifier.fillMaxWidth(), contentPadding = ButtonPadding) {
+            Text("Try again", style = WeatherText.button)
+        }
+    }
+}
+
 /** The first fetch failed and nothing is saved yet. */
 @Composable
 fun ServiceErrorScreen(onTryAgain: () -> Unit, modifier: Modifier = Modifier) {
@@ -128,7 +151,7 @@ fun ServiceErrorScreen(onTryAgain: () -> Unit, modifier: Modifier = Modifier) {
 
 /** First load: a still partly-cloudy sky, a spinning cookie and placeholder cards. */
 @Composable
-fun LoadingScreen(modifier: Modifier = Modifier, isDay: Boolean = LocalTime.now().hour in 6..17) {
+fun LoadingScreen(modifier: Modifier = Modifier, isDay: Boolean = LocalTime.now(JakartaZone).hour in 6..17) {
     val colours = cardTint(Condition.PARTLY_CLOUDY, isDay)
     Box(modifier.fillMaxSize()) {
         WeatherBackground(Condition.PARTLY_CLOUDY, isDay, Modifier.fillMaxSize())
@@ -312,6 +335,12 @@ private fun WelcomePreview() = WeatherTheme(darkTheme = false) { WelcomeScreen(o
 @Composable
 private fun LocationDeniedPreview() = WeatherTheme(darkTheme = false) {
     LocationDeniedScreen(onOpenSettings = {}, onTryAgain = {})
+}
+
+@Preview(widthDp = 380, heightDp = 780)
+@Composable
+private fun LocationUnavailablePreview() = WeatherTheme(darkTheme = false) {
+    LocationUnavailableScreen(onOpenLocationSettings = {}, onTryAgain = {})
 }
 
 @Preview(widthDp = 380, heightDp = 780)

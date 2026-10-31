@@ -14,6 +14,9 @@ sealed interface MainUiState {
     /** Location permission was refused. */
     data object LocationDenied : MainUiState
 
+    /** Location is allowed but there is no fix, for example with location services off. */
+    data object LocationUnavailable : MainUiState
+
     /** The first fetch failed and nothing is cached. */
     data class Error(val message: String) : MainUiState
 

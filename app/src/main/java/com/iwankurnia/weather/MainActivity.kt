@@ -32,7 +32,8 @@ import kotlinx.coroutines.launch
 /**
  * Hosts the main screen. Location flow: first launch shows the welcome screen; "Continue" asks for
  * location; a refusal shows the location-refused screen, which recovers when the user returns
- * from settings with access granted.
+ * from settings with access granted. With access but no fix (location turned off), the
+ * can't-find-you screen links to the location settings and retries on return.
  */
 class MainActivity : ComponentActivity() {
 
@@ -52,7 +53,8 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
-        if (savedInstanceState == null) startFlow()
+        // Not tied to savedInstanceState: after process death the fresh ViewModel must start too.
+        viewModel.start(hasLocation = hasLocation(), locationAsked = locationAsked())
         if (hasAnyWidget()) WidgetUpdater.schedule(applicationContext)
 
         // Every fresh snapshot is also saved to the cache, so redraw the widgets from it.
@@ -73,23 +75,20 @@ class MainActivity : ComponentActivity() {
                 onOpenSettings = {
                     startActivity(Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, Uri.fromParts("package", packageName, null)))
                 },
+                onOpenLocationSettings = {
+                    startActivity(Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS))
+                },
             )
         }
     }
 
     override fun onResume() {
         super.onResume()
-        // Back from settings with access now granted.
+        // Back from settings with access now granted, or with location now turned on.
         val state = viewModel.state.value
-        if (hasLocation() && (state is MainUiState.LocationDenied || state is MainUiState.Welcome)) {
-            viewModel.refresh(force = true)
-        }
-    }
-
-    private fun startFlow() = when {
-        hasLocation() -> viewModel.refresh(force = false)
-        locationAsked() -> viewModel.showLocationDenied()
-        else -> viewModel.showWelcome()
+        val retry = state is MainUiState.LocationUnavailable ||
+            (hasLocation() && (state is MainUiState.LocationDenied || state is MainUiState.Welcome))
+        if (retry) viewModel.refresh(force = true)
     }
 
     private fun hasLocation() = listOf(Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION)

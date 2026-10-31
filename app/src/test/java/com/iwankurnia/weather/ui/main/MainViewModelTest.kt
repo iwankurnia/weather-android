@@ -4,12 +4,14 @@ import com.iwankurnia.weather.data.LoadResult
 import com.iwankurnia.weather.data.WeatherRepository
 import com.iwankurnia.weather.model.SampleData
 import com.iwankurnia.weather.model.WeatherSnapshot
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.resetMain
+import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
 import org.junit.After
@@ -24,14 +26,19 @@ class MainViewModelTest {
     private val dispatcher = StandardTestDispatcher()
     private val snapshot = SampleData.dayPartlyCloudy
 
-    private class FakeRepository(var next: LoadResult) : WeatherRepository {
+    private class FakeRepository(var next: LoadResult, var cache: WeatherSnapshot? = null) : WeatherRepository {
         val forceFlags = mutableListOf<Boolean>()
+
+        /** When set, [load] waits for it, so a test can look at the state mid-load. */
+        var gate: CompletableDeferred<Unit>? = null
+
         override suspend fun load(forceRefresh: Boolean): LoadResult {
             forceFlags += forceRefresh
+            gate?.await()
             return next
         }
 
-        override suspend fun cached(): WeatherSnapshot? = null
+        override suspend fun cached(): WeatherSnapshot? = cache
     }
 
     @Before
@@ -55,7 +62,10 @@ class MainViewModelTest {
             stateAfterLoad(LoadResult.Stale(snapshot, "offline")),
         )
         assertEquals(MainUiState.LocationDenied, stateAfterLoad(LoadResult.NoLocation(permissionDenied = true)))
-        assertEquals(MainUiState.Welcome, stateAfterLoad(LoadResult.NoLocation(permissionDenied = false)))
+        assertEquals(
+            MainUiState.LocationUnavailable,
+            stateAfterLoad(LoadResult.NoLocation(permissionDenied = false)),
+        )
         assertEquals(MainUiState.Error("boom"), stateAfterLoad(LoadResult.Failed("boom")))
     }
 
@@ -112,5 +122,69 @@ class MainViewModelTest {
         assertEquals(MainUiState.Welcome, vm.state.value)
         vm.showLocationDenied()
         assertEquals(MainUiState.LocationDenied, vm.state.value)
+    }
+
+    @Test
+    fun viewModel_startRunsOnce() = runTest(dispatcher) {
+        val repo = FakeRepository(LoadResult.Fresh(snapshot))
+        val vm = MainViewModel(repo)
+        vm.start(hasLocation = true, locationAsked = true)
+        advanceUntilIdle()
+        // A second call (rotation) neither refetches nor changes the screen.
+        vm.start(hasLocation = false, locationAsked = false)
+        advanceUntilIdle()
+        assertEquals(listOf(false), repo.forceFlags)
+        assertEquals(MainUiState.Ready(snapshot, staleSince = null), vm.state.value)
+    }
+
+    @Test
+    fun viewModel_startWithoutLocation() = runTest(dispatcher) {
+        val asked = MainViewModel(FakeRepository(LoadResult.Fresh(snapshot)))
+        asked.start(hasLocation = false, locationAsked = true)
+        assertEquals(MainUiState.LocationDenied, asked.state.value)
+
+        val first = MainViewModel(FakeRepository(LoadResult.Fresh(snapshot)))
+        first.start(hasLocation = false, locationAsked = false)
+        assertEquals(MainUiState.Welcome, first.state.value)
+    }
+
+    @Test
+    fun viewModel_showsCacheWhileLoading() = runTest(dispatcher) {
+        val cached = SampleData.nightRain
+        val repo = FakeRepository(LoadResult.Fresh(snapshot), cache = cached)
+        repo.gate = CompletableDeferred()
+        val vm = MainViewModel(repo)
+        vm.refresh(false)
+        runCurrent()
+        assertEquals(MainUiState.Ready(cached, staleSince = cached.fetchedAt), vm.state.value)
+        assertTrue(vm.refreshing.value)
+
+        repo.gate!!.complete(Unit)
+        advanceUntilIdle()
+        assertEquals(MainUiState.Ready(snapshot, staleSince = null), vm.state.value)
+        assertFalse(vm.refreshing.value)
+    }
+
+    @Test
+    fun viewModel_failedLoadKeepsCacheAsStale() = runTest(dispatcher) {
+        val cached = SampleData.nightRain
+        val vm = MainViewModel(FakeRepository(LoadResult.Failed("offline"), cache = cached))
+        vm.refresh(false)
+        advanceUntilIdle()
+        assertEquals(MainUiState.Ready(cached, staleSince = cached.fetchedAt), vm.state.value)
+    }
+
+    @Test
+    fun viewModel_retryFromLocationScreenSkipsCache() = runTest(dispatcher) {
+        val repo = FakeRepository(LoadResult.NoLocation(permissionDenied = false), cache = SampleData.nightRain)
+        val vm = MainViewModel(repo)
+        repo.gate = CompletableDeferred()
+        vm.showLocationDenied()
+        vm.refresh(true)
+        runCurrent()
+        assertEquals(MainUiState.Loading, vm.state.value)
+        repo.gate!!.complete(Unit)
+        advanceUntilIdle()
+        assertEquals(MainUiState.LocationUnavailable, vm.state.value)
     }
 }
