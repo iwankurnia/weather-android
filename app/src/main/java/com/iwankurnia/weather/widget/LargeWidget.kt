@@ -161,7 +161,7 @@ private fun todayLine(snapshot: WeatherSnapshot): String {
  * The TextClock pair, shadowed white at low opacity, otherwise in the system text colour.
  * [dateSp] of 0 hides the date (one-row layout).
  */
-private fun clockViews(
+internal fun clockViews(
     context: Context,
     style: WidgetTextStyle,
     colours: WidgetColours,

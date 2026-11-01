@@ -5,4 +5,8 @@
     <string name="widget_small">Weather</string>
     <string name="widget_large_description">Time, date, temperature and how hot it feels</string>
     <string name="widget_small_description">Temperature and how hot it feels</string>
+    <string name="widget_strip">Weather strip</string>
+    <string name="widget_strip_description">Temperature, how hot it feels and what\'s coming, in one row</string>
+    <string name="widget_scene">Weather scene</string>
+    <string name="widget_scene_description">Time, date and weather on the app\'s weather background</string>
 </resources>

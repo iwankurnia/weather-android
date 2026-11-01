@@ -100,6 +100,19 @@ Agreed mockup: `mockups/widget.html` (option C, without the hourly row). It take
 - **Background opacity (Iwan's request):** each widget has its own opacity setting, from 0% (text only) to 100% (solid), defaulting to 100%. A small settings sheet with a slider opens when the widget is added. To change it later, long-press the widget and use Android's reconfigure (pencil) option. The mockup shows 100%, 60%, 0% and the sheet.
   - *Claude's call:* at 40% or lower, the text switches to white with a soft shadow so it stays readable on the wallpaper.
 
+## More widgets (Iwan's choice, 2026-11-01)
+
+Picked from five designs (`mockups/scene-widgets.html`): B and E. Both sit beside the original two widgets in the picker.
+
+- **B. Weather strip (4×1):** in system colours, with the same opacity setting as the other widgets. It shows icon, temperature, a "Feels 35°" pill, a divider, then the forecast summary as a bold headline ("Rain likely from around 14:00") and a smaller detail line ("Very hot until then"). Below about 240 dp wide it drops the summary.
+- **E. Weather scene (4×2):** the large widget's content in white over a still frame of the app's weather background, for the current weather and time of day.
+  - **Rain and thunderstorm:** follow the falling-rain design. A dark cloud band, two layers of slanted rain, splashes along the bottom, and in storms steeper rain plus a crisp branching bolt with a soft glow, kept in the gap between the top labels.
+  - **Redraw:** the frame is redrawn on each refresh, so the rain and bolt move.
+  - **Opacity:** the opacity setting fades the scene.
+  - **Resizing:** it resizes like the large widget.
+
+**Corners (Iwan's request):** every widget uses Android's own widget corner radius (`system_app_widget_background_radius`, 28 dp on Pixel's launcher) and is marked as the widget background. Small backdrops inside widgets use `system_app_widget_inner_radius`. Pills and round backdrops stay fully rounded. The setup preview uses the same system radius.
+
 ## Location (Iwan's decision)
 
 The widget always shows the phone's current area, even when the app hasn't been opened for hours. The app therefore asks for "Allow all the time" location access as well as normal location access.

@@ -72,19 +72,33 @@ object WidgetUpdater {
             .enqueueUniqueWork(REFRESH_NOW_WORK_NAME, ExistingWorkPolicy.REPLACE, request)
     }
 
-    /** Stops the refresh once neither widget is on the home screen. */
+    /** Stops the refresh once no widget is on the home screen. */
     fun cancelIfUnused(context: Context) {
         val manager = AppWidgetManager.getInstance(context)
-        val inUse = listOf(LargeWidgetReceiver::class.java, SmallWidgetReceiver::class.java).any {
-            manager.getAppWidgetIds(ComponentName(context, it)).isNotEmpty()
-        }
+        val inUse = WIDGET_RECEIVERS.any { manager.getAppWidgetIds(ComponentName(context, it)).isNotEmpty() }
         if (!inUse) WorkManager.getInstance(context).cancelUniqueWork(WORK_NAME)
     }
 
-    /** Redraws every large and small widget from the cache. */
+    /** Redraws every widget, of every kind, from the cache. */
     suspend fun updateAll(context: Context) {
         _refreshes.update { it + 1 }
         LargeWidget().updateAll(context)
         SmallWidget().updateAll(context)
+        StripWidget().updateAll(context)
+        SceneWidget().updateAll(context)
+    }
+
+    /** True while any of the app's widgets is on a home screen. */
+    fun anyInUse(context: Context): Boolean {
+        val manager = AppWidgetManager.getInstance(context)
+        return WIDGET_RECEIVERS.any { manager.getAppWidgetIds(ComponentName(context, it)).isNotEmpty() }
     }
 }
+
+/** Every widget the app offers; keep in step with the receivers in the manifest. */
+internal val WIDGET_RECEIVERS = listOf(
+    LargeWidgetReceiver::class.java,
+    SmallWidgetReceiver::class.java,
+    StripWidgetReceiver::class.java,
+    SceneWidgetReceiver::class.java,
+)

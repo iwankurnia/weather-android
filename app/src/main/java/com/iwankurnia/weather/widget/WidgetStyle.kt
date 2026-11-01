@@ -22,6 +22,7 @@ import androidx.glance.ImageProvider
 import androidx.glance.LocalContext
 import androidx.glance.action.clickable
 import androidx.glance.action.actionStartActivity
+import androidx.glance.appwidget.appWidgetBackground
 import androidx.glance.appwidget.cornerRadius
 import androidx.glance.background
 import androidx.glance.layout.Alignment
@@ -201,9 +202,16 @@ internal fun textStyle(
 /** Opens the app; every part of both widgets uses it. */
 internal fun GlanceModifier.opensApp(): GlanceModifier = clickable(actionStartActivity<MainActivity>())
 
+/**
+ * The widget's own corner radius as Android sets it (28 dp on Pixel's Android 16 launcher; other
+ * launchers choose their own), so widgets line up with the system's and other apps' widgets.
+ */
+internal fun GlanceModifier.systemWidgetCorners(): GlanceModifier =
+    appWidgetBackground().cornerRadius(android.R.dimen.system_app_widget_background_radius)
+
 /** The rounded card behind each widget, with the opacity applied to its colour. */
 internal fun GlanceModifier.widgetCard(colours: WidgetColours, padding: Dp): GlanceModifier =
-    fillMaxSize().cornerRadius(26.dp).background(colours.background).padding(padding).opensApp()
+    fillMaxSize().systemWidgetCorners().background(colours.background).padding(padding).opensApp()
 
 @Composable
 internal fun WeatherIcon(snapshot: WeatherSnapshot, colours: WidgetColours, size: Dp) {
@@ -262,7 +270,11 @@ internal fun StaleHint(text: String, colours: WidgetColours, maxLines: Int = 1) 
     if (backdrop == null) {
         label()
     } else {
-        Box(modifier = GlanceModifier.background(backdrop).cornerRadius(8.dp).padding(horizontal = 6.dp, vertical = 1.dp)) {
+        Box(
+            modifier = GlanceModifier.background(backdrop)
+                .cornerRadius(android.R.dimen.system_app_widget_inner_radius)
+                .padding(horizontal = 6.dp, vertical = 1.dp),
+        ) {
             label()
         }
     }

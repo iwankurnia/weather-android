@@ -57,5 +57,29 @@
                 android:name="android.appwidget.provider"
                 android:resource="@xml/small_widget_info" />
         </receiver>
+
+        <receiver
+            android:name=".widget.StripWidgetReceiver"
+            android:exported="true"
+            android:label="@string/widget_strip">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/strip_widget_info" />
+        </receiver>
+
+        <receiver
+            android:name=".widget.SceneWidgetReceiver"
+            android:exported="true"
+            android:label="@string/widget_scene">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/scene_widget_info" />
+        </receiver>
     </application>
 </manifest>

@@ -52,6 +52,9 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.res.dimensionResource
+import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shadow
 import androidx.compose.ui.platform.LocalContext
@@ -99,15 +102,14 @@ class WidgetConfigActivity : ComponentActivity() {
             finish()
             return
         }
-        val small = AppWidgetManager.getInstance(this).getAppWidgetInfo(appWidgetId)
-            ?.provider?.className == SmallWidgetReceiver::class.java.name
+        val kind = widgetKindOf(AppWidgetManager.getInstance(this).getAppWidgetInfo(appWidgetId)?.provider?.className)
 
         enableEdgeToEdge()
         setContent {
             ConfigTheme {
                 WidgetConfigScreen(
                     appWidgetId = appWidgetId,
-                    small = small,
+                    kind = kind,
                     needsBackgroundLocation = !hasPermission(Manifest.permission.ACCESS_BACKGROUND_LOCATION),
                     hasForegroundLocation = { hasForegroundLocation() },
                     onDone = ::finishWithOpacity,
@@ -130,9 +132,6 @@ class WidgetConfigActivity : ComponentActivity() {
         }
     }
 
-    private fun isSmallWidget(): Boolean = AppWidgetManager.getInstance(this).getAppWidgetInfo(appWidgetId)
-        ?.provider?.className == SmallWidgetReceiver::class.java.name
-
     private fun resultIntent() = Intent().putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, appWidgetId)
 
     private fun hasPermission(permission: String) =
@@ -144,12 +143,22 @@ class WidgetConfigActivity : ComponentActivity() {
 
 private enum class ConfigStep { EXPLAIN, SETTINGS }
 
+/** Which widget is being set up, so the preview shows the right one. */
+internal enum class WidgetKind { LARGE, SMALL, STRIP, SCENE }
+
+internal fun widgetKindOf(receiverClassName: String?): WidgetKind = when (receiverClassName) {
+    SmallWidgetReceiver::class.java.name -> WidgetKind.SMALL
+    StripWidgetReceiver::class.java.name -> WidgetKind.STRIP
+    SceneWidgetReceiver::class.java.name -> WidgetKind.SCENE
+    else -> WidgetKind.LARGE
+}
+
 private val PRESETS = listOf(0, 30, 60, 100)
 
 @Composable
 private fun WidgetConfigScreen(
     appWidgetId: Int,
-    small: Boolean,
+    kind: WidgetKind,
     needsBackgroundLocation: Boolean,
     hasForegroundLocation: () -> Boolean,
     onDone: (Int) -> Unit,
@@ -197,7 +206,7 @@ private fun WidgetConfigScreen(
             SettingsSheet(
                 opacity = current,
                 onOpacityChange = { opacity = it },
-                preview = { WidgetPreview(snapshot ?: SampleData.dayPartlyCloudy, small, current) },
+                preview = { WidgetPreview(snapshot ?: SampleData.dayPartlyCloudy, kind, current) },
                 onDone = { onDone(current) },
             )
         }
@@ -325,14 +334,20 @@ private fun androidx.compose.foundation.layout.RowScope.PresetPill(value: Int, s
 
 /** A Compose copy of the widget, so the opacity can be judged against the real wallpaper. */
 @Composable
-private fun WidgetPreview(snapshot: WeatherSnapshot, small: Boolean, opacityPct: Int) {
-    val look = widgetTextStyle(opacityPct)
+private fun WidgetPreview(snapshot: WeatherSnapshot, kind: WidgetKind, opacityPct: Int) {
+    val scene = kind == WidgetKind.SCENE
+    // The scene widget keeps white text on its own background whatever the opacity.
+    val look = if (scene) widgetTextStyle(0) else widgetTextStyle(opacityPct)
     val scheme = MaterialTheme.colorScheme
     val white = look.whiteWithShadow
     val text = if (white) Color.White else scheme.onSurface
     val subtle = if (white) Color.White else scheme.onSurfaceVariant
     val shadow = if (white) Shadow(Color.Black.copy(alpha = 0.45f), blurRadius = 8f) else null
-    val pillBg = if (white) Color.Black.copy(alpha = 0.25f) else scheme.primaryContainer
+    val pillBg = when {
+        scene -> Color.White.copy(alpha = 0.22f)
+        white -> Color.Black.copy(alpha = 0.25f)
+        else -> scheme.primaryContainer
+    }
     val pillFg = if (white) Color.White else scheme.onPrimaryContainer
     val now = snapshot.now
     val icon = weatherIconRes(now.condition, now.isDay)
@@ -347,10 +362,34 @@ private fun WidgetPreview(snapshot: WeatherSnapshot, small: Boolean, opacityPct:
             modifier = Modifier.clip(CircleShape).background(pillBg).padding(horizontal = 9.dp, vertical = 3.dp),
         )
     }
-    val card = Modifier.clip(RoundedCornerShape(26.dp))
-        .background(scheme.surface.copy(alpha = look.backgroundAlpha))
+    // Android's own widget corner radius, as the real widgets use.
+    val corners = RoundedCornerShape(dimensionResource(android.R.dimen.system_app_widget_background_radius))
+    val card = if (scene) {
+        Modifier.clip(corners).drawBehind { drawSceneBackground(now.condition, now.isDay, opacityPct, snapshot) }
+    } else {
+        Modifier.clip(corners).background(scheme.surface.copy(alpha = look.backgroundAlpha))
+    }
 
-    if (small) {
+    if (kind == WidgetKind.STRIP) {
+        val (headline, detail) = stripLines(snapshot.summary)
+        Row(card.fillMaxWidth().height(64.dp).padding(horizontal = 14.dp), verticalAlignment = Alignment.CenterVertically) {
+            androidx.compose.foundation.Image(painterResource(icon), label, Modifier.size(30.dp))
+            Spacer(Modifier.width(6.dp))
+            Text(formatDegrees(now.temperatureC), style = style(24))
+            Spacer(Modifier.width(8.dp))
+            pill()
+            Spacer(Modifier.width(10.dp))
+            Box(Modifier.width(1.dp).height(26.dp).background(subtle.copy(alpha = 0.4f)))
+            Spacer(Modifier.width(10.dp))
+            Column(Modifier.weight(1f)) {
+                Text(headline, style = style(12, FontWeight.Bold), maxLines = 1)
+                if (detail != null) Text(detail, style = style(11, colour = subtle), maxLines = 1)
+            }
+        }
+        return
+    }
+
+    if (kind == WidgetKind.SMALL) {
         Column(card.size(140.dp).padding(14.dp), verticalArrangement = Arrangement.SpaceBetween) {
             Text(snapshot.place.areaName, style = style(11, FontWeight.SemiBold, subtle))
             Column {
@@ -410,4 +449,18 @@ private fun ConfigTheme(content: @Composable () -> Unit) {
     val context: Context = LocalContext.current
     val scheme: ColorScheme = if (isSystemInDarkTheme()) dynamicDarkColorScheme(context) else dynamicLightColorScheme(context)
     MaterialTheme(colorScheme = scheme, content = content)
+}
+
+/** The scene widget's background, drawn by the same renderer the widget uses. */
+private fun androidx.compose.ui.graphics.drawscope.DrawScope.drawSceneBackground(
+    condition: com.iwankurnia.weather.model.Condition,
+    isDay: Boolean,
+    opacityPct: Int,
+    snapshot: WeatherSnapshot,
+) {
+    val w = size.width.toInt()
+    val h = size.height.toInt()
+    if (w <= 0 || h <= 0) return
+    val bitmap = renderScene(condition, isDay, w, h, seed = snapshot.fetchedAt.epochSecond.toInt(), alpha = opacityPct / 100f)
+    drawImage(bitmap.asImageBitmap())
 }

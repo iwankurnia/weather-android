@@ -1,8 +1,6 @@
 package com.iwankurnia.weather
 
 import android.Manifest
-import android.appwidget.AppWidgetManager
-import android.content.ComponentName
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.net.Uri
@@ -22,8 +20,6 @@ import androidx.lifecycle.repeatOnLifecycle
 import com.iwankurnia.weather.ui.main.MainUiState
 import com.iwankurnia.weather.ui.main.MainViewModel
 import com.iwankurnia.weather.ui.main.WeatherRoute
-import com.iwankurnia.weather.widget.LargeWidgetReceiver
-import com.iwankurnia.weather.widget.SmallWidgetReceiver
 import com.iwankurnia.weather.widget.WidgetUpdater
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.filterIsInstance
@@ -98,11 +94,7 @@ class MainActivity : ComponentActivity() {
 
     private fun markLocationAsked() = getPreferences(MODE_PRIVATE).edit { putBoolean(KEY_ASKED, true) }
 
-    private fun hasAnyWidget(): Boolean {
-        val manager = AppWidgetManager.getInstance(this)
-        return listOf(LargeWidgetReceiver::class.java, SmallWidgetReceiver::class.java)
-            .any { manager.getAppWidgetIds(ComponentName(this, it)).isNotEmpty() }
-    }
+    private fun hasAnyWidget(): Boolean = WidgetUpdater.anyInUse(this)
 
     private companion object {
         const val KEY_ASKED = "location_asked"
